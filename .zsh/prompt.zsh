@@ -13,7 +13,7 @@ LAST_COMMAND_DURATION=""
 # Function to generate the prompt
 generate_prompt() {
     # Elements
-    local username="%n"
+    local username="${CUSTOM_USERNAME:-"%n"}"
     local hostname="${CUSTOM_HOSTNAME:-"%m"}"
     local user_host="%F{$COLOR_GREY}$username@$hostname%f"
     local current_dir="%F{$COLOR_MAGENTA}%~%f"
