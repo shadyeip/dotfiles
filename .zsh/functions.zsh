@@ -61,3 +61,5 @@ dotfiles_update() {
  echo "\n✨ Dotfiles successfully updated"
  echo "💡 Tip: You may need to restart your shell for changes to take effect"
 }
+
+alias update_dotfiles=dotfiles_update
