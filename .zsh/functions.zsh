@@ -36,3 +36,22 @@ hgrep() {
 epoch2date() {
     date -r "$1" -u "+%a %Y-%m-%d %H:%M:%S UTC"
 }
+
+dotfiles_update() {
+ echo "Updating dotfiles from shadyeip/dotfiles..."
+ 
+ cd ~ || { echo "Error: Could not change to home directory"; return 1; }
+ 
+ git clone https://github.com/shadyeip/dotfiles.git || { 
+   echo "Error: Failed to clone repository"; return 1; 
+ }
+ 
+ cp -rf dotfiles/.[!.]* . || { 
+   echo "Error: Failed to copy files"; rm -rf dotfiles; return 1; 
+ }
+ 
+ rm -rf dotfiles
+ 
+ echo "\n✨ Dotfiles successfully updated"
+ echo "💡 Tip: You may need to restart your shell for changes to take effect"
+}
