@@ -46,9 +46,15 @@ dotfiles_update() {
    echo "Error: Failed to clone repository"; return 1; 
  }
  
- cp -rf dotfiles/.[!.]* . || { 
-   echo "Error: Failed to copy files"; rm -rf dotfiles; return 1; 
- }
+ echo "Copying new dotfiles..."
+ for file in dotfiles/.[!.]*; do
+   base_name=$(basename "$file")
+   if [[ "$base_name" != ".git" ]] && 
+      [[ "$base_name" != "README.md" ]] && 
+      [[ "$base_name" != "LICENSE" ]]; then
+     cp -rf "$file" .
+   fi
+ done
  
  rm -rf dotfiles
  
