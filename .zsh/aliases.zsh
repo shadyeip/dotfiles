@@ -48,6 +48,28 @@ setup_ls_colors() {
 }
 setup_ls_colors
 
+setup_grep_colors() {
+   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+       # Linux
+       alias grep='grep --color=auto'
+       alias egrep='egrep --color=auto'
+       alias fgrep='fgrep --color=auto'
+   elif [[ "$OSTYPE" == "darwin"* ]]; then
+       # macOS
+       export GREP_OPTIONS='--color=auto'
+       alias grep='grep --color=auto'
+       alias egrep='egrep --color=auto'
+       alias fgrep='fgrep --color=auto'
+   else
+       # Default to BSD-style (including FreeBSD)
+       export GREP_OPTIONS='--color=auto'
+       alias grep='grep --color=auto'
+       alias egrep='egrep --color=auto'
+       alias fgrep='fgrep --color=auto'
+   fi
+}
+setup_grep_colors
+
 # Git shortcuts
 alias g="git"
 alias gs="git status"
