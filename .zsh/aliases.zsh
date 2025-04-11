@@ -1,8 +1,5 @@
 # tmux
-alias sls='tmux ls'
-alias ss='tmux new -s $1'
-alias sc='tmux attach -t $1'
-alias sq='tmux kill-session -t $1'
+alias work='tmux new-session -s work || tmux attach -t work'
 
 # Navigation
 setopt auto_cd
