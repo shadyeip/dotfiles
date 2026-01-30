@@ -34,32 +34,28 @@ hgrep() {
 }
 
 epoch2date() {
-    date -r "$1" -u "+%a %Y-%m-%d %H:%M:%S UTC"
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        date -d "@$1" -u "+%a %Y-%m-%d %H:%M:%S UTC"
+    else
+        date -r "$1" -u "+%a %Y-%m-%d %H:%M:%S UTC"
+    fi
 }
 
 dotfiles_update() {
- echo "Updating dotfiles from shadyeip/dotfiles..."
- 
- cd ~ || { echo "Error: Could not change to home directory"; return 1; }
- 
- git clone https://github.com/shadyeip/dotfiles.git || { 
-   echo "Error: Failed to clone repository"; return 1; 
- }
- 
- echo "Copying new dotfiles..."
- for file in dotfiles/.[!.]*; do
-   base_name=$(basename "$file")
-   if [[ "$base_name" != ".git" ]] && 
-      [[ "$base_name" != "README.md" ]] && 
-      [[ "$base_name" != "LICENSE" ]]; then
-     cp -rf "$file" .
-   fi
- done
- 
- rm -rf dotfiles
- 
- echo "\n✨ Dotfiles successfully updated"
- echo "💡 Tip: You may need to restart your shell for changes to take effect"
+    local dotfiles_dir
+    dotfiles_dir="$(readlink ~/.zsh)"
+    dotfiles_dir="${dotfiles_dir%/.zsh}"
+
+    if [[ ! -d "$dotfiles_dir/.git" ]]; then
+        echo "Error: Could not find dotfiles repo at $dotfiles_dir"
+        return 1
+    fi
+
+    echo "Updating dotfiles from $dotfiles_dir..."
+    git -C "$dotfiles_dir" pull || { echo "Error: git pull failed"; return 1; }
+
+    echo "Dotfiles updated. Reloading..."
+    source ~/.zshrc
 }
 
 alias update_dotfiles=dotfiles_update

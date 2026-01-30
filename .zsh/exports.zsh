@@ -21,3 +21,14 @@ export PAGER='less'
 export LANG='en_US.UTF-8'
 export LC_ALL='en_US.UTF-8'
 export TERM='xterm-256color'
+
+# Conditional PATH additions
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Homebrew
+    [[ -d /opt/homebrew/bin ]] && export PATH="/opt/homebrew/bin:$PATH"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    [[ -d /usr/local/bin ]] && export PATH="/usr/local/bin:$PATH"
+    [[ -d /snap/bin ]] && export PATH="/snap/bin:$PATH"
+    # Linuxbrew
+    [[ -d /home/linuxbrew/.linuxbrew/bin ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+fi

@@ -81,7 +81,11 @@ alias gpl="git pull"
 
 # IP addresses
 alias ip-egress="curl icanhazip.com -4"
-alias ip-local="ipconfig getifaddr en0"
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    alias ip-local="ip route get 1 | awk '{print \$7; exit}'"
+else
+    alias ip-local="ipconfig getifaddr en0"
+fi
 
 # Quick edit for configuration files
 alias zshconfig="vim ~/.zshrc"
@@ -97,7 +101,9 @@ alias base64-decode='python3 -c "import sys, base64; print(base64.b64decode(sys.
 alias pdb="python3 -m pdb"
 
 # neovim
-alias vim=nvim
+if command -v nvim &>/dev/null; then
+    alias vim=nvim
+fi
 
 # gcloud
 # Auth
