@@ -116,6 +116,28 @@ Inside the Telescope popup:
 - `Enter` — open the selected file
 - `Esc` — close the popup
 
+### LSP (Language Server Protocol)
+
+Provides go-to-definition, find references, hover docs, rename, diagnostics, and code actions. Language servers are installed automatically via [Mason](https://github.com/williamboman/mason.nvim) on first use.
+
+Supported servers: pyright (Python), gopls (Go), lua_ls (Lua), ts_ls (TypeScript/JavaScript), terraformls (Terraform).
+
+- `gd` — go to definition
+- `gr` — find all references
+- `K` — hover documentation
+- `Space r` — rename symbol
+- `Space a` — code actions
+- `Space d` — show diagnostics for current line
+
+### Auto-completion (nvim-cmp)
+
+Completion popup appears automatically as you type. Sources: LSP suggestions, file paths, and buffer words.
+
+- `Ctrl-n` / `Ctrl-p` — next/previous item
+- `Enter` — confirm selection
+- `Ctrl-Space` — manually trigger completion
+- `Ctrl-d` / `Ctrl-u` — scroll docs
+
 ## Git Config
 
 Create `~/.gitconfig.local` with your identity:
