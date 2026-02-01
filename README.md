@@ -138,6 +138,18 @@ Completion popup appears automatically as you type. Sources: LSP suggestions, fi
 - `Ctrl-Space` — manually trigger completion
 - `Ctrl-d` / `Ctrl-u` — scroll docs
 
+### General Keybindings
+
+Leader key is `Space`. Pane navigation is handled by vim-tmux-navigator (`Ctrl-h/j/k/l`).
+
+- `Space w` — save file
+- `Space q` — quit
+- `Space x` — close current buffer
+- `Esc` — clear search highlight
+- `J` / `K` (visual mode) — move selected lines down/up
+- `<` / `>` (visual mode) — indent/outdent and keep selection
+- `Ctrl-d` / `Ctrl-u` — half-page scroll and center cursor
+
 ## Git Config
 
 Create `~/.gitconfig.local` with your identity:

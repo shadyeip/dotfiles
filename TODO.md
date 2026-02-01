@@ -9,9 +9,9 @@
 
 ## Neovim
 - [x] Add Treesitter to `nvim/init.lua`
-- [ ] Add Telescope to `nvim/init.lua`
+- [x] Add Telescope to `nvim/init.lua`
 - [x] Add LSP config to `nvim/init.lua`
-- [ ] Add custom keybindings to `nvim/init.lua`
+- [x] Add custom keybindings to `nvim/init.lua`
 
 ## Install Script Hardening
 - [ ] Add a `--verify` flag to `install.sh` to check symlinks and dependencies
