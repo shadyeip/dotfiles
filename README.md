@@ -20,7 +20,6 @@ After install, optionally add these to your `~/.zshrc` (above the loader block):
 ```sh
 export CUSTOM_HOSTNAME=""
 export CUSTOM_USERNAME=""
-export IS_SAFE_MACHINE=true
 ```
 
 ## Update
