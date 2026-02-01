@@ -1,4 +1,4 @@
-# dotfiles2
+# dotfiles
 
 Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 
@@ -8,6 +8,8 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 - **tmux** - Catppuccin Mocha theme, tmux-yank, extrakto via TPM
 - **starship** - Matching Catppuccin Mocha prompt
 - **git** - Global config with common aliases
+- **nvim** - Neovim with lazy.nvim and Catppuccin
+- **ghostty** - Terminal emulator config
 
 ## Prerequisites
 
@@ -19,8 +21,8 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 ## Install
 
 ```sh
-git clone https://github.com/youruser/dotfiles2.git ~/dev/dotfiles2
-cd ~/dev/dotfiles2
+git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
+cd ~/dotfiles
 chmod +x install.sh
 ./install.sh
 ```
