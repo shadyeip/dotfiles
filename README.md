@@ -1,95 +1,72 @@
-# dotfiles
+# dotfiles2
 
-Cross-platform zsh/tmux dotfiles for macOS and Linux.
+Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
+
+## What's Included
+
+- **zsh** - Aliases, exports, PATH setup
+- **tmux** - Catppuccin Mocha theme, tmux-yank, extrakto via TPM
+- **starship** - Matching Catppuccin Mocha prompt
+- **git** - Global config with common aliases
+
+## Prerequisites
+
+- zsh
+- [Starship](https://starship.rs)
+- tmux
+- git
 
 ## Install
 
 ```sh
-git clone https://github.com/shadyeip/dotfiles.git ~/dev/dotfiles
-cd ~/dev/dotfiles
+git clone https://github.com/youruser/dotfiles2.git ~/dev/dotfiles2
+cd ~/dev/dotfiles2
+chmod +x install.sh
 ./install.sh
 ```
 
-The installer will:
-- Symlink `~/.zsh` and `~/.tmux.conf` to the repo
-- Back up any existing files before overwriting
-- Append a loader block to `~/.zshrc` if not already present
+After install, open tmux and press `prefix + I` to install tmux plugins.
 
-After install, optionally add these to your `~/.zshrc` (above the loader block):
+## Tmux Plugins
 
-```sh
-export CUSTOM_HOSTNAME=""
-export CUSTOM_USERNAME=""
+### vim-tmux-navigator
+
+Seamless navigation between vim splits and tmux panes using the same keys.
+
+- `Ctrl-h` — move left
+- `Ctrl-j` — move down
+- `Ctrl-k` — move up
+- `Ctrl-l` — move right
+
+Requires the matching vim plugin ([vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator)).
+
+### tmux-yank
+
+Copies text from tmux copy mode to the system clipboard.
+
+- Enter copy mode: `prefix + [`
+- Select text (vi keys), then press `y` to yank to system clipboard
+- `prefix + y` copies the current command line to clipboard
+
+### tmux-resurrect
+
+Saves and restores tmux sessions (windows, panes, layouts) across system restarts.
+
+- `prefix + Ctrl-s` — save the current session
+- `prefix + Ctrl-r` — restore a previously saved session
+
+### extrakto
+
+Fuzzy-find and grab text from the scrollback buffer using fzf.
+
+- `prefix + tab` opens the extrakto popup
+- Type to filter URLs, paths, words, or other tokens from scrollback
+- Press `enter` to insert the selection into the current pane, or `ctrl-y` to copy it
+
+Create `~/.gitconfig.local` with your identity:
+
+```gitconfig
+[user]
+    name = Your Name
+    email = you@example.com
 ```
-
-## Update
-
-```sh
-dotfiles_update
-# or
-update_dotfiles
-```
-
-This runs `git pull` in the repo and reloads your shell.
-
-## Tmux
-
-Install TPM, then press `prefix + I` inside tmux to install plugins.
-
-```sh
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-```
-
-### Key Bindings
-
-| Keys | Action |
-|------|--------|
-| `prefix + \|` | Split pane horizontally |
-| `prefix + -` | Split pane vertically |
-| `prefix + r` | Reload config |
-| `prefix + tab` | Extrakto — fuzzy search screen text |
-| `prefix + Ctrl-s` | Save session (resurrect) |
-| `prefix + Ctrl-r` | Restore session (resurrect) |
-
-### Extrakto (fuzzy text grabber)
-
-Press `prefix + tab` to open a fuzzy finder over all text visible in your tmux pane. Use it to grab paths, URLs, command output, etc. without touching the mouse.
-
-- `ctrl + f` — cycle filter modes (word / line / path / URL)
-- `tab` — insert selection into the current pane
-- `enter` — copy selection to clipboard
-- `ctrl + o` — open selection (e.g. URL in browser)
-
-Works over SSH since it runs inside tmux.
-
-### Resurrect (session persistence)
-
-Save and restore your tmux sessions across reboots.
-
-- `prefix + Ctrl-s` — save all sessions, windows, and pane layouts
-- `prefix + Ctrl-r` — restore previously saved sessions
-
-Pane contents are captured automatically.
-
-### Aliases
-
-| Alias | Action |
-|-------|--------|
-| `work` | New/attach session "work" |
-| `ss <name>` | New session |
-| `sc <name>` | Attach to session |
-| `sq <name>` | Kill session |
-| `sls` | List sessions |
-
-## Uninstall
-
-```sh
-rm ~/.zsh ~/.tmux.conf
-```
-
-Then remove the loader block from `~/.zshrc`.
-
-## Supported Platforms
-
-- macOS (Homebrew)
-- Linux (Debian/Ubuntu, Fedora, etc.)
