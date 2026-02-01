@@ -8,7 +8,10 @@
 - [x] Populate `plugins.zsh` with zsh-autosuggestions, zsh-syntax-highlighting, and fzf keybindings/completions
 
 ## Neovim
-- [ ] Expand `nvim/init.lua` — add Treesitter, Telescope, LSP config, and custom keybindings
+- [x] Add Treesitter to `nvim/init.lua`
+- [ ] Add Telescope to `nvim/init.lua`
+- [ ] Add LSP config to `nvim/init.lua`
+- [ ] Add custom keybindings to `nvim/init.lua`
 
 ## Install Script Hardening
 - [ ] Add a `--verify` flag to `install.sh` to check symlinks and dependencies

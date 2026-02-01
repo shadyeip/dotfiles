@@ -89,14 +89,32 @@ Fuzzy finder keybindings for zsh. Requires [fzf](https://github.com/junegunn/fzf
 
 ### Treesitter
 
-Provides language-aware syntax highlighting, indentation, and selection. Parsers are installed automatically when you open a file.
+Provides language-aware syntax highlighting, indentation, and selection. Unlike regex-based highlighting, Treesitter parses your code into a syntax tree so keywords, functions, variables, and strings are colored accurately.
+
+Parsers are compiled during `install.sh` — nvim starts instantly with no compilation on launch.
 
 - `Ctrl-Space` — start/expand selection by syntax node (e.g. variable → expression → statement → function)
 - `Backspace` — shrink selection back to the previous node
-- `:TSInstallInfo` — list installed language parsers
-- `:TSUpdate` — update all parsers
+- `:lua print(vim.treesitter.get_parser():lang())` — confirm Treesitter is active for the current file
 
-Pre-installed parsers: bash, c, css, dockerfile, go, html, javascript, json, lua, markdown, python, rust, terraform, toml, typescript, yaml. Other languages are installed on demand.
+Pre-installed parsers: bash, c, css, dockerfile, go, html, javascript, json, lua, markdown, python, rust, terraform, toml, typescript, yaml.
+
+### Telescope
+
+Fuzzy finder for files, text, buffers, and more. Opens a floating popup with live preview. Requires [ripgrep](https://github.com/BurntSushi/ripgrep) for live grep.
+
+- `Space f` — find files by name
+- `Space g` — live grep across all files
+- `Space b` — switch between open buffers
+- `Space h` — search Neovim help tags
+
+Open a file with `:e path/to/file` — it stays loaded as a buffer even after you open another file. Use `Space b` to switch between all open buffers.
+
+Inside the Telescope popup:
+- Type to filter results
+- `Ctrl-n` / `Ctrl-p` — move up/down
+- `Enter` — open the selected file
+- `Esc` — close the popup
 
 ## Git Config
 

@@ -57,6 +57,18 @@ else
     echo "fzf already installed"
 fi
 
+# Install ripgrep if not present (needed for Telescope live grep)
+if ! command -v rg &>/dev/null; then
+    echo "Installing ripgrep..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install ripgrep
+    else
+        sudo apt install -y ripgrep
+    fi
+else
+    echo "ripgrep already installed"
+fi
+
 # Backup and symlink helper
 link_file() {
     local src="$1"
