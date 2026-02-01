@@ -76,6 +76,7 @@ alias g="git"
 alias gs="git status"
 alias ga="git add"
 alias gc="git commit -m"
+alias gca="git commit --amend --no-edit"
 alias gp="git push"
 alias gpl="git pull"
 

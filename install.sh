@@ -4,6 +4,83 @@ set -euo pipefail
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
+# --verify mode: check symlinks and dependencies, then exit
+if [[ "${1:-}" == "--verify" ]]; then
+    echo "Verifying dotfiles installation..."
+    errors=0
+
+    # Check dependencies
+    for cmd in starship nvim gcc fzf rg git tmux; do
+        if command -v "$cmd" &>/dev/null; then
+            echo "  [ok] $cmd"
+        else
+            echo "  [MISSING] $cmd"
+            errors=$((errors + 1))
+        fi
+    done
+
+    # Check symlinks
+    check_link() {
+        local dst="$1"
+        local src="$2"
+        if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+            echo "  [ok] $dst -> $src"
+        elif [[ -L "$dst" ]]; then
+            echo "  [WRONG] $dst -> $(readlink "$dst") (expected $src)"
+            errors=$((errors + 1))
+        else
+            echo "  [MISSING] $dst"
+            errors=$((errors + 1))
+        fi
+    }
+    check_link "$HOME/.zsh"                    "$DOTFILES/.zsh"
+    check_link "$HOME/.tmux.conf"              "$DOTFILES/tmux/tmux.conf"
+    check_link "$HOME/.config/starship.toml"   "$DOTFILES/starship/starship.toml"
+    check_link "$HOME/.gitconfig"              "$DOTFILES/git/gitconfig"
+    check_link "$HOME/.gitignore_global"       "$DOTFILES/git/gitignore_global"
+    check_link "$HOME/.config/ghostty/config"  "$DOTFILES/ghostty/config"
+    check_link "$HOME/.config/nvim"            "$DOTFILES/nvim"
+
+    # Check zshrc loader block
+    if grep -qF "# >>> dotfiles >>>" "$HOME/.zshrc" 2>/dev/null; then
+        echo "  [ok] zshrc loader block"
+    else
+        echo "  [MISSING] zshrc loader block"
+        errors=$((errors + 1))
+    fi
+
+    # Check TPM
+    if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
+        echo "  [ok] TPM"
+    else
+        echo "  [MISSING] TPM"
+        errors=$((errors + 1))
+    fi
+
+    # Check Treesitter parsers
+    PARSER_DIR="$HOME/.local/share/nvim/site/parser"
+    missing_parsers=()
+    for lang in bash c css dockerfile go html javascript json lua markdown markdown_inline python rust terraform toml typescript yaml; do
+        if [[ ! -f "$PARSER_DIR/$lang.so" ]]; then
+            missing_parsers+=("$lang")
+        fi
+    done
+    if [[ ${#missing_parsers[@]} -eq 0 ]]; then
+        echo "  [ok] Treesitter parsers"
+    else
+        echo "  [MISSING] Treesitter parsers: ${missing_parsers[*]}"
+        errors=$((errors + 1))
+    fi
+
+    echo ""
+    if [[ $errors -eq 0 ]]; then
+        echo "All checks passed."
+    else
+        echo "$errors issue(s) found. Run ./install.sh to fix."
+    fi
+    exit $errors
+fi
+
 # Detect OS
 OS="unknown"
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -69,10 +146,16 @@ else
     echo "ripgrep already installed"
 fi
 
-# Backup and symlink helper
+# Backup and symlink helper (skips if already correct)
 link_file() {
     local src="$1"
     local dst="$2"
+
+    # Skip if symlink already points to the right place
+    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
+        echo "Already linked $dst"
+        return
+    fi
 
     if [[ -e "$dst" || -L "$dst" ]]; then
         mkdir -p "$BACKUP_DIR"
@@ -129,8 +212,19 @@ TS_LANGS=(bash c css dockerfile go html javascript json lua markdown python rust
 
 echo "Installing Treesitter parsers..."
 
-# First, trigger downloads by running nvim briefly
-nvim --headless -c "lua require('nvim-treesitter').install({$(printf "'%s'," "${TS_LANGS[@]}")})" -c "sleep 15" -c "qa" 2>&1 | cat
+# Check if all parsers are already compiled
+all_compiled=true
+for lang in "${TS_LANGS[@]}"; do
+    [[ ! -f "$PARSER_DIR/$lang.so" ]] && all_compiled=false && break
+done
+[[ ! -f "$PARSER_DIR/markdown_inline.so" ]] && all_compiled=false
+
+if [[ "$all_compiled" == true ]]; then
+    echo "  All parsers already compiled, skipping download"
+else
+    # Trigger downloads by running nvim briefly
+    nvim --headless -c "lua require('nvim-treesitter').install({$(printf "'%s'," "${TS_LANGS[@]}")})" -c "sleep 15" -c "qa" 2>&1 | cat
+fi
 
 # Compile each parser from cached sources
 TS_CACHE="$HOME/.cache/nvim"

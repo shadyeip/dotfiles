@@ -14,8 +14,8 @@
 - [x] Add custom keybindings to `nvim/init.lua`
 
 ## Install Script Hardening
-- [ ] Add a `--verify` flag to `install.sh` to check symlinks and dependencies
-- [ ] Add idempotency checks so it skips already-correct symlinks
+- [x] Add a `--verify` flag to `install.sh` to check symlinks and dependencies
+- [x] Add idempotency checks so it skips already-correct symlinks
 
 ## Organization
 - [ ] Move gcloud aliases from `aliases.zsh` into a separate `.zsh/gcloud.zsh`
