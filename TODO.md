@@ -5,7 +5,7 @@
 - [x] Fix hardcoded `~/dev/dotfiles2` path in README
 
 ## Zsh Plugins
-- [ ] Populate `plugins.zsh` with zsh-autosuggestions, zsh-syntax-highlighting, and fzf keybindings/completions
+- [x] Populate `plugins.zsh` with zsh-autosuggestions, zsh-syntax-highlighting, and fzf keybindings/completions
 
 ## Neovim
 - [ ] Expand `nvim/init.lua` — add Treesitter, Telescope, LSP config, and custom keybindings

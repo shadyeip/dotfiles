@@ -62,7 +62,7 @@ link_file() {
 }
 
 # Symlinks
-link_file "$DOTFILES/zsh"                  "$HOME/.zsh"
+link_file "$DOTFILES/.zsh"                 "$HOME/.zsh"
 link_file "$DOTFILES/tmux/tmux.conf"       "$HOME/.tmux.conf"
 link_file "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
 link_file "$DOTFILES/git/gitconfig"        "$HOME/.gitconfig"
@@ -72,14 +72,14 @@ link_file "$DOTFILES/nvim"                "$HOME/.config/nvim"
 
 # Zshrc loader block
 ZSHRC="$HOME/.zshrc"
-MARKER="# >>> dotfiles2 >>>"
+MARKER="# >>> dotfiles >>>"
 if ! grep -qF "$MARKER" "$ZSHRC" 2>/dev/null; then
     echo "" >> "$ZSHRC"
     cat >> "$ZSHRC" <<'EOF'
-# >>> dotfiles2 >>>
+# >>> dotfiles >>>
 for f in ~/.zsh/*.zsh; do source "$f"; done
 eval "$(starship init zsh)"
-# <<< dotfiles2 <<<
+# <<< dotfiles <<<
 EOF
     echo "Added loader block to ~/.zshrc"
 else

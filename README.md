@@ -4,7 +4,7 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 
 ## What's Included
 
-- **zsh** - Aliases, exports, PATH setup
+- **zsh** - Aliases, exports, PATH setup, plugins (autosuggestions, syntax highlighting, fzf)
 - **tmux** - Catppuccin Mocha theme, tmux-yank, extrakto via TPM
 - **starship** - Matching Catppuccin Mocha prompt
 - **git** - Global config with common aliases
@@ -64,6 +64,28 @@ Fuzzy-find and grab text from the scrollback buffer using fzf.
 - `prefix + tab` opens the extrakto popup
 - Type to filter URLs, paths, words, or other tokens from scrollback
 - Press `enter` to insert the selection into the current pane, or `ctrl-y` to copy it
+
+## Zsh Plugins
+
+Plugins are auto-installed on first shell load (cloned to `~/.zsh/plugins/`).
+
+### zsh-autosuggestions
+
+Suggests commands as you type based on your history. Press the right arrow key to accept a suggestion.
+
+### zsh-syntax-highlighting
+
+Highlights valid commands in green and invalid ones in red as you type, so you can catch typos before hitting enter.
+
+### fzf integration
+
+Fuzzy finder keybindings for zsh. Requires [fzf](https://github.com/junegunn/fzf) to be installed (handled by `install.sh`).
+
+- `Ctrl-R` — fuzzy search command history
+- `Ctrl-T` — fuzzy find and insert a file path
+- `Alt-C` — fuzzy find and cd into a directory
+
+## Git Config
 
 Create `~/.gitconfig.local` with your identity:
 
