@@ -33,6 +33,18 @@ else
     echo "Neovim already installed"
 fi
 
+# Install gcc (needed for Treesitter parser compilation)
+if ! command -v gcc &>/dev/null; then
+    echo "Installing gcc..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install gcc
+    else
+        sudo apt install -y build-essential
+    fi
+else
+    echo "gcc already installed"
+fi
+
 # Install fzf if not present
 if ! command -v fzf &>/dev/null; then
     echo "Installing fzf..."
@@ -94,6 +106,56 @@ if [[ ! -d "$TPM_DIR" ]]; then
 else
     echo "TPM already installed"
 fi
+
+# Install Treesitter parsers
+# The nvim-treesitter install() is async and unreliable in headless mode,
+# so we compile parsers directly from cached sources.
+PARSER_DIR="$HOME/.local/share/nvim/site/parser"
+mkdir -p "$PARSER_DIR"
+
+TS_LANGS=(bash c css dockerfile go html javascript json lua markdown python rust terraform toml typescript yaml)
+
+echo "Installing Treesitter parsers..."
+
+# First, trigger downloads by running nvim briefly
+nvim --headless -c "lua require('nvim-treesitter').install({$(printf "'%s'," "${TS_LANGS[@]}")})" -c "sleep 15" -c "qa" 2>&1 | cat
+
+# Compile each parser from cached sources
+TS_CACHE="$HOME/.cache/nvim"
+compile_parser() {
+    local lang="$1"
+    local src_dir="$2"
+    local out="$PARSER_DIR/$lang.so"
+    if [[ -f "$out" ]]; then
+        echo "  $lang: already compiled"
+        return
+    fi
+    if [[ ! -f "$src_dir/parser.c" ]]; then
+        echo "  $lang: source not found, skipping"
+        return
+    fi
+    echo "  $lang: compiling..."
+    local srcs=("$src_dir/parser.c")
+    [[ -f "$src_dir/scanner.c" ]] && srcs+=("$src_dir/scanner.c")
+    cc -shared -o "$out" -I "$src_dir" "${srcs[@]}" -O2 2>&1 || echo "  $lang: compilation failed"
+}
+
+for lang in "${TS_LANGS[@]}"; do
+    src_dir="$TS_CACHE/tree-sitter-$lang/src"
+    # Some parsers have nested source layouts
+    if [[ ! -d "$src_dir" ]]; then
+        src_dir="$TS_CACHE/tree-sitter-$lang/$lang/src"
+    fi
+    if [[ ! -d "$src_dir" ]]; then
+        src_dir="$TS_CACHE/tree-sitter-$lang/tree-sitter-$lang/src"
+    fi
+    compile_parser "$lang" "$src_dir"
+done
+
+# Markdown inline is a sub-parser bundled with markdown
+compile_parser "markdown_inline" "$TS_CACHE/tree-sitter-markdown/tree-sitter-markdown-inline/src"
+
+echo "Treesitter parsers installed"
 
 echo ""
 echo "Done!"

@@ -8,7 +8,7 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 - **tmux** - Catppuccin Mocha theme, tmux-yank, extrakto via TPM
 - **starship** - Matching Catppuccin Mocha prompt
 - **git** - Global config with common aliases
-- **nvim** - Neovim with lazy.nvim and Catppuccin
+- **nvim** - Neovim with lazy.nvim, Catppuccin, and Treesitter
 - **ghostty** - Terminal emulator config
 
 ## Prerequisites
@@ -84,6 +84,19 @@ Fuzzy finder keybindings for zsh. Requires [fzf](https://github.com/junegunn/fzf
 - `Ctrl-R` — fuzzy search command history
 - `Ctrl-T` — fuzzy find and insert a file path
 - `Alt-C` — fuzzy find and cd into a directory
+
+## Neovim Plugins
+
+### Treesitter
+
+Provides language-aware syntax highlighting, indentation, and selection. Parsers are installed automatically when you open a file.
+
+- `Ctrl-Space` — start/expand selection by syntax node (e.g. variable → expression → statement → function)
+- `Backspace` — shrink selection back to the previous node
+- `:TSInstallInfo` — list installed language parsers
+- `:TSUpdate` — update all parsers
+
+Pre-installed parsers: bash, c, css, dockerfile, go, html, javascript, json, lua, markdown, python, rust, terraform, toml, typescript, yaml. Other languages are installed on demand.
 
 ## Git Config
 

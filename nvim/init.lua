@@ -40,6 +40,24 @@ require("lazy").setup({
     lazy = false,
   },
   {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    config = function()
+      require("nvim-treesitter").setup({})
+
+      -- Incremental selection keymaps
+      vim.keymap.set("n", "<C-Space>", function()
+        require("nvim-treesitter.incremental_selection").init_selection()
+      end, { desc = "Start treesitter selection" })
+      vim.keymap.set("v", "<C-Space>", function()
+        require("nvim-treesitter.incremental_selection").node_incremental()
+      end, { desc = "Expand treesitter selection" })
+      vim.keymap.set("v", "<BS>", function()
+        require("nvim-treesitter.incremental_selection").node_decremental()
+      end, { desc = "Shrink treesitter selection" })
+    end,
+  },
+  {
     "catppuccin/nvim",
     name = "catppuccin",
     priority = 1000,
