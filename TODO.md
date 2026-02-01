@@ -18,8 +18,8 @@
 - [x] Add idempotency checks so it skips already-correct symlinks
 
 ## Organization
-- [ ] Move gcloud aliases from `aliases.zsh` into a separate `.zsh/gcloud.zsh`
-- [ ] Resolve prompt conflict — remove either custom `prompt.zsh` or Starship (pick one)
+- [x] Move gcloud aliases from `aliases.zsh` into a separate `.zsh/gcloud.zsh`
+- [x] Resolve prompt conflict — remove either custom `prompt.zsh` or Starship (pick one)
 
 ## Nice-to-haves
 - [ ] Expand Starship config with language modules (python, node, go, rust, etc.)
