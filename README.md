@@ -35,7 +35,12 @@ After install, open tmux and press `prefix + I` to install tmux plugins.
 
 - `prefix -` — horizontal split
 - `prefix |` — vertical split
+- `prefix t` — open Claude in a vertical split, auto-tiled
 
+### Pane Sync
+
+- `prefix s` — toggle synchronized input to all panes in the current window
+- The current window tab shows `[SYNC]` when synchronize-panes is active
 ### vim-tmux-navigator
 
 Seamless navigation between vim splits and tmux panes using the same keys.
