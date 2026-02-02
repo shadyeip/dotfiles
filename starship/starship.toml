@@ -10,7 +10,6 @@ $nodejs\
 $golang\
 $docker_context\
 $terraform\
-$gcloud\
 $character"""
 
 [directory]

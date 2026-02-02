@@ -21,6 +21,12 @@
 - [x] Move gcloud aliases from `aliases.zsh` into a separate `.zsh/gcloud.zsh`
 - [x] Resolve prompt conflict — remove either custom `prompt.zsh` or Starship (pick one)
 
+## Zsh Startup Performance
+- [x] Lazy-load nvm (defer sourcing nvm.sh until `nvm`/`node`/`npm`/`npx` is first called)
+- [x] Lazy-load virtualenvwrapper (defer hook until `workon`/`mkvirtualenv` is first called)
+- [x] Fix compdump rebuild on every startup (removed duplicate compinit in completions.zsh)
+- [x] Deduplicate PATH entries (removed duplicate homebrew in exports.zsh, duplicate dotfiles block, ruby eval)
+
 ## Nice-to-haves
 - [x] Expand Starship config with language modules (python, node, go, rust, etc.)
 - [x] Add a Brewfile for declarative CLI tool installation on new Macs

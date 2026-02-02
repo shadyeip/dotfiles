@@ -1,7 +1,7 @@
 # File: ~/.zsh/completions.zsh
 
-# Initialize the completion system
-autoload -Uz compinit && compinit
+# Completion system is initialized by Oh My Zsh (compinit).
+# This file configures completion styles only.
 
 # Cache completion to speed things up
 zstyle ':completion::complete:*' use-cache on
@@ -141,9 +141,8 @@ if (( $+commands[python] )); then
     }
     compdef _python_custom python
 
-    # pip completions
+    # pip completions (lazy — avoid eval on every shell start)
     if (( $+commands[pip] )); then
-        eval "$(pip completion --zsh)"
         compdef _pip_completion pip
     fi
 
