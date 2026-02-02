@@ -22,5 +22,5 @@
 - [x] Resolve prompt conflict — remove either custom `prompt.zsh` or Starship (pick one)
 
 ## Nice-to-haves
-- [ ] Expand Starship config with language modules (python, node, go, rust, etc.)
+- [x] Expand Starship config with language modules (python, node, go, rust, etc.)
 - [ ] Add a Brewfile for declarative CLI tool installation on new Macs

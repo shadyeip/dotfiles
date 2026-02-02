@@ -5,6 +5,12 @@ format = """
 $directory\
 $git_branch\
 $git_status\
+$python\
+$nodejs\
+$golang\
+$docker_context\
+$terraform\
+$gcloud\
 $character"""
 
 [directory]
@@ -18,6 +24,36 @@ format = "[$symbol$branch]($style) "
 [git_status]
 style = "bold maroon"
 format = '([$all_status$ahead_behind]($style) )'
+
+[python]
+format = "[$symbol$version]($style) "
+symbol = " "
+style = "yellow"
+
+[nodejs]
+format = "[$symbol$version]($style) "
+symbol = " "
+style = "green"
+
+[golang]
+format = "[$symbol$version]($style) "
+symbol = " "
+style = "sapphire"
+
+[docker_context]
+format = "[$symbol$context]($style) "
+symbol = " "
+style = "blue"
+
+[terraform]
+format = "[$symbol$workspace]($style) "
+symbol = "󱁢 "
+style = "mauve"
+
+[gcloud]
+format = "[$symbol$project]($style) "
+symbol = " "
+style = "sapphire"
 
 [character]
 success_symbol = "[>](bold green)"
