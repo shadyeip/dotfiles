@@ -10,7 +10,7 @@ if [[ "${1:-}" == "--verify" ]]; then
     errors=0
 
     # Check dependencies
-    for cmd in starship nvim gcc fzf rg git tmux; do
+    for cmd in starship nvim gcc fzf rg git tmux node go; do
         if command -v "$cmd" &>/dev/null; then
             echo "  [ok] $cmd"
         else
@@ -144,6 +144,30 @@ if ! command -v rg &>/dev/null; then
     fi
 else
     echo "ripgrep already installed"
+fi
+
+# Install Node.js if not present (needed for Mason LSP servers like pyright)
+if ! command -v node &>/dev/null; then
+    echo "Installing Node.js..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install node
+    else
+        sudo apt install -y nodejs npm
+    fi
+else
+    echo "Node.js already installed"
+fi
+
+# Install Go if not present (needed for Mason LSP servers like gopls)
+if ! command -v go &>/dev/null; then
+    echo "Installing Go..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install go
+    else
+        sudo apt install -y golang
+    fi
+else
+    echo "Go already installed"
 fi
 
 # Backup and symlink helper (skips if already correct)
