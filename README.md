@@ -31,6 +31,11 @@ After install, open tmux and press `prefix + I` to install tmux plugins.
 
 ## Tmux Plugins
 
+### Splits
+
+- `prefix -` — horizontal split
+- `prefix |` — vertical split
+
 ### vim-tmux-navigator
 
 Seamless navigation between vim splits and tmux panes using the same keys.
@@ -107,6 +112,9 @@ Fuzzy finder for files, text, buffers, and more. Opens a floating popup with liv
 - `Space g` — live grep across all files
 - `Space b` — switch between open buffers
 - `Space h` — search Neovim help tags
+- `Space gf` — find git-tracked files only
+- `Space -` — horizontal split
+- `Space |` — vertical split
 
 Open a file with `:e path/to/file` — it stays loaded as a buffer even after you open another file. Use `Space b` to switch between all open buffers.
 

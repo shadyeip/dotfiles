@@ -67,6 +67,7 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>g", builtin.live_grep, { desc = "Live grep" })
       vim.keymap.set("n", "<leader>b", builtin.buffers, { desc = "Buffers" })
       vim.keymap.set("n", "<leader>h", builtin.help_tags, { desc = "Help tags" })
+      vim.keymap.set("n", "<leader>gf", builtin.git_files, { desc = "Git files" })
     end,
   },
   -- LSP (mason for auto-installing servers)
@@ -183,6 +184,8 @@ vim.lsp.enable({ "pyright", "gopls", "lua_ls", "ts_ls", "terraformls" })
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { desc = "Save file" })
 vim.keymap.set("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit" })
 vim.keymap.set("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "Close buffer" })
+vim.keymap.set("n", "<leader>-", "<cmd>split<CR>", { desc = "Horizontal split" })
+vim.keymap.set("n", "<leader>|", "<cmd>vsplit<CR>", { desc = "Vertical split" })
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })

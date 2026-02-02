@@ -79,6 +79,7 @@ alias gc="git commit -m"
 alias gca="git commit --amend --no-edit"
 alias gp="git push"
 alias gpl="git pull"
+alias gd="git diff"
 
 # IP addresses
 alias ip-egress="curl icanhazip.com -4"
