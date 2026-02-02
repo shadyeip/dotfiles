@@ -23,4 +23,4 @@
 
 ## Nice-to-haves
 - [x] Expand Starship config with language modules (python, node, go, rust, etc.)
-- [ ] Add a Brewfile for declarative CLI tool installation on new Macs
+- [x] Add a Brewfile for declarative CLI tool installation on new Macs
