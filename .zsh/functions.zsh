@@ -54,10 +54,18 @@ dotfiles_update() {
     echo "Updating dotfiles from $dotfiles_dir..."
     git -C "$dotfiles_dir" pull || { echo "Error: git pull failed"; return 1; }
 
-    echo "Dotfiles updated. Reloading..."
-    source ~/.zshrc
+    echo ""
+    if "$dotfiles_dir/install.sh" --verify; then
+        echo ""
+        echo "Dotfiles updated. Reloading..."
+        source ~/.zshrc
+    else
+        echo ""
+        echo "Issues found. Run: $dotfiles_dir/install.sh"
+    fi
 }
 
+alias dotup=dotfiles_update
 alias update_dotfiles=dotfiles_update
 
 setup_gcp_env() {
