@@ -178,6 +178,22 @@ Completion popup appears automatically as you type. Sources: LSP suggestions, fi
 - `Ctrl-Space` — manually trigger completion
 - `Ctrl-d` / `Ctrl-u` — scroll docs
 
+### Formatting (conform.nvim)
+
+Auto-formats on save. Formatters are installed automatically via Mason.
+
+- `Space F` — manually format buffer
+
+Configured formatters: black (Python), prettier (JS/TS/JSON/YAML/Markdown), stylua (Lua), gofmt (Go), terraform_fmt (Terraform).
+
+### Commenting
+
+Built-in commenting (Neovim 0.10+). No plugin needed.
+
+- `gcc` — toggle comment on current line
+- `gc` (visual mode) — toggle comment on selected lines
+- `gc{motion}` — comment with motion (e.g., `gcap` for paragraph)
+
 ### General Keybindings
 
 Leader key is `Space`. Pane navigation is handled by vim-tmux-navigator (`Ctrl-h/j/k/l`).
