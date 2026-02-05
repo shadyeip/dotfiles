@@ -86,6 +86,19 @@ require("lazy").setup({
       })
     end,
   },
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          "black",
+          "prettier",
+          "stylua",
+        },
+      })
+    end,
+  },
 
   -- Completion
   {
@@ -119,6 +132,35 @@ require("lazy").setup({
           { name = "buffer" },
         }),
       })
+    end,
+  },
+
+  -- Formatting
+  {
+    "stevearc/conform.nvim",
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          python = { "black" },
+          javascript = { "prettier" },
+          typescript = { "prettier" },
+          javascriptreact = { "prettier" },
+          typescriptreact = { "prettier" },
+          json = { "prettier" },
+          yaml = { "prettier" },
+          markdown = { "prettier" },
+          go = { "gofmt" },
+          lua = { "stylua" },
+          terraform = { "terraform_fmt" },
+        },
+        format_on_save = {
+          timeout_ms = 500,
+          lsp_fallback = true,
+        },
+      })
+      vim.keymap.set({ "n", "v" }, "<leader>F", function()
+        require("conform").format({ async = true, lsp_fallback = true })
+      end, { desc = "Format buffer" })
     end,
   },
 
