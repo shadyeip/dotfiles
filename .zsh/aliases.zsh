@@ -106,3 +106,7 @@ alias pdb="python3 -m pdb"
 if command -v nvim &>/dev/null; then
     alias vim=nvim
 fi
+
+# starship
+alias se='starship explain'
+alias prompt='starship explain'
