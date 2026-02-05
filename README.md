@@ -20,14 +20,40 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 
 ## Install
 
+### macOS
+
 ```sh
 git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-chmod +x install.sh
 ./install.sh
 ```
 
+### Linux (with sudo)
+
+On Linux, some dependencies require sudo. The script detects this and installs to your user's home directory:
+
+```sh
+git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+sudo ./install-new.sh
+```
+
+The install script will prompt you to select an AI assistant:
+- **Claude** - binds to `prefix + t`
+- **Gemini** - binds to `prefix + g`
+- **Both** - enables both keybindings
+
 After install, open tmux and press `prefix + I` to install tmux plugins.
+
+## Update
+
+Pull latest changes and verify installation:
+
+```sh
+dotup
+```
+
+This runs `git pull`, verifies symlinks and dependencies with `install.sh --verify`, and reloads your shell. Alias: `update_dotfiles`.
 
 ## Tmux Plugins
 
@@ -35,7 +61,8 @@ After install, open tmux and press `prefix + I` to install tmux plugins.
 
 - `prefix -` — horizontal split
 - `prefix |` — vertical split
-- `prefix t` — open Claude in a vertical split, auto-tiled
+- `prefix t` — open Claude in a vertical split, auto-tiled (if selected during install)
+- `prefix g` — open Gemini in a vertical split, auto-tiled (if selected during install)
 
 ### Pane Sync
 
