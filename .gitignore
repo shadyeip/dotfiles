@@ -1,2 +1,4 @@
-.zsh/plugins/
+zsh/.config/zsh/plugins/
+tmux/.config/tmux/local.conf
+git/.config/git/config.local
 .claude/

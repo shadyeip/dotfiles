@@ -1,7 +1,7 @@
 # Zsh plugins
 # Clone plugins if missing, then source them
 
-ZSH_PLUGIN_DIR="${HOME}/.zsh/plugins"
+ZSH_PLUGIN_DIR="${HOME}/.config/zsh/plugins"
 
 # Install a plugin from GitHub if not already cloned
 _zsh_plugin_install() {

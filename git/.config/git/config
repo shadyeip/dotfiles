@@ -1,6 +1,6 @@
 [core]
     editor = vim
-    excludesfile = ~/.gitignore_global
+    excludesfile = ~/.config/git/ignore
 
 [init]
     defaultBranch = main
@@ -15,4 +15,4 @@
     lg = log --oneline --graph --decorate --all
 
 [include]
-    path = ~/.gitconfig.local
+    path = ~/.config/git/config.local

@@ -1,4 +1,4 @@
-# File: ~/.zsh/completions.zsh
+# File: ~/.config/zsh/03-completions.zsh
 
 # Completion system is initialized by Oh My Zsh (compinit).
 # This file configures completion styles only.
@@ -85,7 +85,7 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' l
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-domain' ignored-patterns '<->.<->.<->.<->' '^[-[:alnum:]]##(.[-[:alnum:]]##)##' '*@*'
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
 
-# File: ~/.zsh/go_python_completions.zsh
+# File: ~/.config/zsh/03-completions.zsh (continued)
 
 # Go (Golang) Completions
 if (( $+commands[go] )); then

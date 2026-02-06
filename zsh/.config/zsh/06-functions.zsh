@@ -43,8 +43,8 @@ epoch2date() {
 
 dotfiles_update() {
     local dotfiles_dir
-    dotfiles_dir="$(readlink ~/.zsh)"
-    dotfiles_dir="${dotfiles_dir%/.zsh}"
+    dotfiles_dir="$(readlink ~/.config/zsh)"
+    dotfiles_dir="${dotfiles_dir%/zsh/.config/zsh}"
 
     if [[ ! -d "$dotfiles_dir/.git" ]]; then
         echo "Error: Could not find dotfiles repo at $dotfiles_dir"

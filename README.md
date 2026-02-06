@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
+Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux. Managed with [GNU Stow](https://www.gnu.org/software/stow/) — all configs live under `~/.config/`.
 
 ## What's Included
 
@@ -11,16 +11,32 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux.
 - **nvim** - Neovim with lazy.nvim, Catppuccin, and Treesitter
 - **ghostty** - Terminal emulator config
 
+## Structure
+
+```
+dotfiles/
+├── git/.config/git/          # → ~/.config/git/
+├── tmux/.config/tmux/        # → ~/.config/tmux/
+├── nvim/.config/nvim/        # → ~/.config/nvim/
+├── starship/.config/         # → ~/.config/starship.toml
+├── ghostty/.config/ghostty/  # → ~/.config/ghostty/
+├── zsh/.config/zsh/          # → ~/.config/zsh/
+├── Brewfile                  # macOS packages
+├── apt-packages.txt          # Linux packages
+└── install.sh                # setup script
+```
+
+Each top-level directory is a stow package. Running `stow -t ~ git tmux nvim starship ghostty zsh` creates symlinks from `~/.config/` into the repo.
+
 ## Prerequisites
 
 - zsh
+- [GNU Stow](https://www.gnu.org/software/stow/)
 - [Starship](https://starship.rs)
 - tmux
 - git
 
 ## Install
-
-### macOS
 
 ```sh
 git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
@@ -28,22 +44,23 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-### Linux (with sudo)
-
-On Linux, some dependencies require sudo. The script detects this and installs to your user's home directory:
+On Linux with sudo:
 
 ```sh
-git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-sudo ./install-new.sh
+sudo ./install.sh
 ```
 
-The install script will prompt you to select an AI assistant:
-- **Claude** - binds to `prefix + t`
-- **Gemini** - binds to `prefix + g`
-- **Both** - enables both keybindings
+The install script will:
+1. Install dependencies (stow, starship, neovim, fzf, ripgrep, etc.)
+2. Remove any old-style symlinks from a previous layout
+3. Stow all packages to `~/.config/`
+4. Prompt for your git identity (name/email) if not configured
+5. Prompt for AI assistant selection (Claude/Gemini)
+6. Install TPM and Treesitter parsers
 
 After install, open tmux and press `prefix + I` to install tmux plugins.
+
+For a detailed walkthrough of keybindings and vim motions, see [TUTORIAL.md](TUTORIAL.md).
 
 ## Update
 
@@ -55,160 +72,77 @@ dotup
 
 This runs `git pull`, verifies symlinks and dependencies with `install.sh --verify`, and reloads your shell. Alias: `update_dotfiles`.
 
-## Tmux Plugins
+## Zsh Load Order
+
+Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixes:
+
+1. `01-exports.zsh` — env vars, PATH
+2. `02-plugins.zsh` — plugin auto-install + sourcing
+3. `03-completions.zsh` — completion setup
+4. `04-keybindings.zsh` — key bindings
+5. `05-aliases.zsh` — aliases
+6. `06-functions.zsh` — functions
+7. `07-gcloud.zsh` — optional gcloud (conditional)
+
+## Tmux Keybindings
 
 ### Splits
 
 - `prefix -` — horizontal split
 - `prefix |` — vertical split
-- `prefix t` — open Claude in a vertical split, auto-tiled (if selected during install)
-- `prefix g` — open Gemini in a vertical split, auto-tiled (if selected during install)
+- `prefix t` — open Claude in a split (if selected during install)
+- `prefix g` — open Gemini in a split (if selected during install)
 
 ### Pane Sync
 
-- `prefix s` — toggle synchronized input to all panes in the current window
-- The current window tab shows `[SYNC]` when synchronize-panes is active
+- `prefix s` — toggle synchronized input to all panes
+
 ### vim-tmux-navigator
 
-Seamless navigation between vim splits and tmux panes using the same keys.
-
-- `Ctrl-h` — move left
-- `Ctrl-j` — move down
-- `Ctrl-k` — move up
-- `Ctrl-l` — move right
-
-Requires the matching vim plugin ([vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator)).
+- `Ctrl-h/j/k/l` — seamless navigation between vim splits and tmux panes
 
 ### tmux-yank
 
-Copies text from tmux copy mode to the system clipboard.
-
 - Enter copy mode: `prefix + [`
-- Select text (vi keys), then press `y` to yank to system clipboard
-- `prefix + y` copies the current command line to clipboard
+- Select text (vi keys), then `y` to yank to clipboard
 
 ### tmux-resurrect
 
-Saves and restores tmux sessions (windows, panes, layouts) across system restarts.
-
-- `prefix + Ctrl-s` — save the current session
-- `prefix + Ctrl-r` — restore a previously saved session
+- `prefix + Ctrl-s` — save session
+- `prefix + Ctrl-r` — restore session
 
 ### extrakto
 
-Fuzzy-find and grab text from the scrollback buffer using fzf.
-
-- `prefix + tab` opens the extrakto popup
-- Type to filter URLs, paths, words, or other tokens from scrollback
-- Press `enter` to insert the selection into the current pane, or `ctrl-y` to copy it
+- `prefix + tab` — fuzzy-find text from scrollback
 
 ## Zsh Plugins
 
-Plugins are auto-installed on first shell load (cloned to `~/.zsh/plugins/`).
+Plugins are auto-installed on first shell load (cloned to `~/.config/zsh/plugins/`).
 
-### zsh-autosuggestions
+- **zsh-autosuggestions** — fish-like inline suggestions (right arrow to accept)
+- **zsh-syntax-highlighting** — colorizes commands as you type
+- **fzf integration** — `Ctrl-R` history, `Ctrl-T` file path, `Alt-C` cd
 
-Suggests commands as you type based on your history. Press the right arrow key to accept a suggestion.
+## Neovim
 
-### zsh-syntax-highlighting
+Leader key: `Space`
 
-Highlights valid commands in green and invalid ones in red as you type, so you can catch typos before hitting enter.
-
-### fzf integration
-
-Fuzzy finder keybindings for zsh. Requires [fzf](https://github.com/junegunn/fzf) to be installed (handled by `install.sh`).
-
-- `Ctrl-R` — fuzzy search command history
-- `Ctrl-T` — fuzzy find and insert a file path
-- `Alt-C` — fuzzy find and cd into a directory
-
-## Neovim Plugins
-
-### Treesitter
-
-Provides language-aware syntax highlighting, indentation, and selection. Unlike regex-based highlighting, Treesitter parses your code into a syntax tree so keywords, functions, variables, and strings are colored accurately.
-
-Parsers are compiled during `install.sh` — nvim starts instantly with no compilation on launch.
-
-- `Ctrl-Space` — start/expand selection by syntax node (e.g. variable → expression → statement → function)
-- `Backspace` — shrink selection back to the previous node
-- `:lua print(vim.treesitter.get_parser():lang())` — confirm Treesitter is active for the current file
-
-Pre-installed parsers: bash, c, css, dockerfile, go, html, javascript, json, lua, markdown, python, rust, terraform, toml, typescript, yaml.
-
-### Telescope
-
-Fuzzy finder for files, text, buffers, and more. Opens a floating popup with live preview. Requires [ripgrep](https://github.com/BurntSushi/ripgrep) for live grep.
-
-- `Space f` — find files by name
-- `Space g` — live grep across all files
-- `Space b` — switch between open buffers
-- `Space h` — search Neovim help tags
-- `Space gf` — find git-tracked files only
-- `Space -` — horizontal split
-- `Space |` — vertical split
-
-Open a file with `:e path/to/file` — it stays loaded as a buffer even after you open another file. Use `Space b` to switch between all open buffers.
-
-Inside the Telescope popup:
-- Type to filter results
-- `Ctrl-n` / `Ctrl-p` — move up/down
-- `Enter` — open the selected file
-- `Esc` — close the popup
-
-### LSP (Language Server Protocol)
-
-Provides go-to-definition, find references, hover docs, rename, diagnostics, and code actions. Language servers are installed automatically via [Mason](https://github.com/williamboman/mason.nvim) on first use.
-
-Supported servers: pyright (Python), gopls (Go), lua_ls (Lua), ts_ls (TypeScript/JavaScript), terraformls (Terraform).
-
+- `Space f` — find files
+- `Space g` — live grep
+- `Space b` — buffers
 - `gd` — go to definition
-- `gr` — find all references
-- `K` — hover documentation
-- `Space r` — rename symbol
-- `Space a` — code actions
-- `Space d` — show diagnostics for current line
+- `gr` — references
+- `K` — hover docs
+- `Space r` — rename
+- `Space F` — format buffer
 
-### Auto-completion (nvim-cmp)
+Formatters: black, prettier, stylua, gofmt, terraform_fmt (auto-format on save).
 
-Completion popup appears automatically as you type. Sources: LSP suggestions, file paths, and buffer words.
-
-- `Ctrl-n` / `Ctrl-p` — next/previous item
-- `Enter` — confirm selection
-- `Ctrl-Space` — manually trigger completion
-- `Ctrl-d` / `Ctrl-u` — scroll docs
-
-### Formatting (conform.nvim)
-
-Auto-formats on save. Formatters are installed automatically via Mason.
-
-- `Space F` — manually format buffer
-
-Configured formatters: black (Python), prettier (JS/TS/JSON/YAML/Markdown), stylua (Lua), gofmt (Go), terraform_fmt (Terraform).
-
-### Commenting
-
-Built-in commenting (Neovim 0.10+). No plugin needed.
-
-- `gcc` — toggle comment on current line
-- `gc` (visual mode) — toggle comment on selected lines
-- `gc{motion}` — comment with motion (e.g., `gcap` for paragraph)
-
-### General Keybindings
-
-Leader key is `Space`. Pane navigation is handled by vim-tmux-navigator (`Ctrl-h/j/k/l`).
-
-- `Space w` — save file
-- `Space q` — quit
-- `Space x` — close current buffer
-- `Esc` — clear search highlight
-- `J` / `K` (visual mode) — move selected lines down/up
-- `<` / `>` (visual mode) — indent/outdent and keep selection
-- `Ctrl-d` / `Ctrl-u` — half-page scroll and center cursor
+LSP servers: pyright, gopls, lua_ls, ts_ls, terraformls (auto-installed via Mason).
 
 ## Git Config
 
-Create `~/.gitconfig.local` with your identity:
+Git identity is stored in `~/.config/git/config.local` (created by `install.sh`):
 
 ```gitconfig
 [user]

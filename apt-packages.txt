@@ -1,0 +1,15 @@
+git
+zsh
+tmux
+neovim
+stow
+fzf
+ripgrep
+curl
+gcc
+build-essential
+nodejs
+npm
+golang
+python3
+python3-pip

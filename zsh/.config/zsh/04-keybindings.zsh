@@ -1,4 +1,4 @@
-# File: ~/.zsh/keybindings.zsh
+# File: ~/.config/zsh/04-keybindings.zsh
 
 # Word navigation for macOS
 # bindkey "^[[1;3C" forward-word   # Option + Right Arrow

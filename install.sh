@@ -1,8 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Detect real user when running with sudo
+if [[ -n "${SUDO_USER:-}" ]]; then
+    REAL_USER="$SUDO_USER"
+    REAL_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    echo "Running as sudo, installing for user: $REAL_USER ($REAL_HOME)"
+    run_as_user() {
+        sudo -u "$REAL_USER" "$@"
+    }
+else
+    REAL_USER="$(whoami)"
+    REAL_HOME="$HOME"
+    run_as_user() {
+        "$@"
+    }
+fi
+
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
-BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR="$REAL_HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+STOW_PACKAGES=(git tmux nvim starship ghostty zsh)
 
 # --verify mode: check symlinks and dependencies, then exit
 if [[ "${1:-}" == "--verify" ]]; then
@@ -10,7 +27,7 @@ if [[ "${1:-}" == "--verify" ]]; then
     errors=0
 
     # Check dependencies
-    for cmd in starship nvim gcc fzf rg git tmux node go; do
+    for cmd in zsh stow starship nvim gcc fzf rg git tmux node go; do
         if command -v "$cmd" &>/dev/null; then
             echo "  [ok] $cmd"
         else
@@ -19,30 +36,26 @@ if [[ "${1:-}" == "--verify" ]]; then
         fi
     done
 
-    # Check symlinks
-    check_link() {
+    # Check stow-managed symlinks
+    check_path() {
         local dst="$1"
-        local src="$2"
-        if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
-            echo "  [ok] $dst -> $src"
-        elif [[ -L "$dst" ]]; then
-            echo "  [WRONG] $dst -> $(readlink "$dst") (expected $src)"
-            errors=$((errors + 1))
+        if [[ -e "$dst" || -L "$dst" ]]; then
+            echo "  [ok] $dst"
         else
             echo "  [MISSING] $dst"
             errors=$((errors + 1))
         fi
     }
-    check_link "$HOME/.zsh"                    "$DOTFILES/.zsh"
-    check_link "$HOME/.tmux.conf"              "$DOTFILES/tmux/tmux.conf"
-    check_link "$HOME/.config/starship.toml"   "$DOTFILES/starship/starship.toml"
-    check_link "$HOME/.gitconfig"              "$DOTFILES/git/gitconfig"
-    check_link "$HOME/.gitignore_global"       "$DOTFILES/git/gitignore_global"
-    check_link "$HOME/.config/ghostty/config"  "$DOTFILES/ghostty/config"
-    check_link "$HOME/.config/nvim"            "$DOTFILES/nvim"
+    check_path "$REAL_HOME/.config/git/config"
+    check_path "$REAL_HOME/.config/git/ignore"
+    check_path "$REAL_HOME/.config/tmux/tmux.conf"
+    check_path "$REAL_HOME/.config/nvim/init.lua"
+    check_path "$REAL_HOME/.config/starship.toml"
+    check_path "$REAL_HOME/.config/ghostty/config"
+    check_path "$REAL_HOME/.config/zsh/01-exports.zsh"
 
     # Check zshrc loader block
-    if grep -qF "# >>> dotfiles >>>" "$HOME/.zshrc" 2>/dev/null; then
+    if grep -qF "# >>> dotfiles >>>" "$REAL_HOME/.zshrc" 2>/dev/null; then
         echo "  [ok] zshrc loader block"
     else
         echo "  [MISSING] zshrc loader block"
@@ -50,18 +63,17 @@ if [[ "${1:-}" == "--verify" ]]; then
     fi
 
     # Check TPM
-    if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
+    if [[ -d "$REAL_HOME/.tmux/plugins/tpm" ]]; then
         echo "  [ok] TPM"
     else
         echo "  [MISSING] TPM"
         errors=$((errors + 1))
     fi
 
-    # Check tmux-local.conf and AI CLIs
-    if [[ -f "$HOME/.tmux-local.conf" ]]; then
-        echo "  [ok] tmux-local.conf"
-        # Check AI CLIs based on what's configured
-        if grep -q "claude" "$HOME/.tmux-local.conf"; then
+    # Check tmux local.conf and AI CLIs
+    if [[ -f "$REAL_HOME/.config/tmux/local.conf" ]]; then
+        echo "  [ok] tmux local.conf"
+        if grep -q "claude" "$REAL_HOME/.config/tmux/local.conf"; then
             if command -v claude &>/dev/null; then
                 echo "  [ok] claude CLI"
             else
@@ -69,7 +81,7 @@ if [[ "${1:-}" == "--verify" ]]; then
                 errors=$((errors + 1))
             fi
         fi
-        if grep -q "gemini" "$HOME/.tmux-local.conf"; then
+        if grep -q "gemini" "$REAL_HOME/.config/tmux/local.conf"; then
             if command -v gemini &>/dev/null; then
                 echo "  [ok] gemini CLI"
             else
@@ -78,12 +90,20 @@ if [[ "${1:-}" == "--verify" ]]; then
             fi
         fi
     else
-        echo "  [MISSING] tmux-local.conf (run install.sh to configure AI assistant)"
+        echo "  [MISSING] tmux local.conf (run install.sh to configure AI assistant)"
+        errors=$((errors + 1))
+    fi
+
+    # Check git identity
+    if [[ -f "$REAL_HOME/.config/git/config.local" ]]; then
+        echo "  [ok] git identity (config.local)"
+    else
+        echo "  [MISSING] git identity (~/.config/git/config.local)"
         errors=$((errors + 1))
     fi
 
     # Check Treesitter parsers
-    PARSER_DIR="$HOME/.local/share/nvim/site/parser"
+    PARSER_DIR="$REAL_HOME/.local/share/nvim/site/parser"
     missing_parsers=()
     for lang in bash c css dockerfile go html javascript json lua markdown markdown_inline python rust terraform toml typescript yaml; do
         if [[ ! -f "$PARSER_DIR/$lang.so" ]]; then
@@ -136,7 +156,7 @@ echo "Selected: ${AI_ASSISTANTS[*]}"
 if [[ " ${AI_ASSISTANTS[*]} " =~ " claude " ]]; then
     if ! command -v claude &>/dev/null; then
         echo "Installing Claude CLI..."
-        npm install -g @anthropic-ai/claude-code
+        run_as_user npm install -g @anthropic-ai/claude-code
     else
         echo "Claude CLI already installed"
     fi
@@ -146,10 +166,34 @@ fi
 if [[ " ${AI_ASSISTANTS[*]} " =~ " gemini " ]]; then
     if ! command -v gemini &>/dev/null; then
         echo "Installing Gemini CLI..."
-        npm install -g @google/gemini-cli
+        run_as_user npm install -g @google/gemini-cli
     else
         echo "Gemini CLI already installed"
     fi
+fi
+
+# Install zsh if not present
+if ! command -v zsh &>/dev/null; then
+    echo "Installing zsh..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install zsh
+    else
+        sudo apt install -y zsh
+    fi
+else
+    echo "zsh already installed"
+fi
+
+# Install stow if not present
+if ! command -v stow &>/dev/null; then
+    echo "Installing stow..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install stow
+    else
+        sudo apt install -y stow
+    fi
+else
+    echo "stow already installed"
 fi
 
 # Install Starship if not present
@@ -232,86 +276,141 @@ else
     echo "Go already installed"
 fi
 
-# Backup and symlink helper (skips if already correct)
-link_file() {
-    local src="$1"
-    local dst="$2"
-
-    # Skip if symlink already points to the right place
-    if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
-        echo "Already linked $dst"
-        return
+# Migration: remove old symlinks from previous dotfiles layout
+echo ""
+echo "Cleaning up old symlinks..."
+OLD_LINKS=(
+    "$REAL_HOME/.zsh"
+    "$REAL_HOME/.tmux.conf"
+    "$REAL_HOME/.gitconfig"
+    "$REAL_HOME/.gitignore_global"
+    "$REAL_HOME/.tmux-local.conf"
+)
+for old in "${OLD_LINKS[@]}"; do
+    if [[ -L "$old" ]]; then
+        echo "  Removing old symlink: $old"
+        rm "$old"
     fi
-
-    if [[ -e "$dst" || -L "$dst" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "Backing up $dst -> $BACKUP_DIR/"
-        mv "$dst" "$BACKUP_DIR/"
-    fi
-
-    mkdir -p "$(dirname "$dst")"
-    ln -sf "$src" "$dst"
-    echo "Linked $src -> $dst"
-}
-
-# Symlinks
-link_file "$DOTFILES/.zsh"                 "$HOME/.zsh"
-link_file "$DOTFILES/tmux/tmux.conf"       "$HOME/.tmux.conf"
-link_file "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
-link_file "$DOTFILES/git/gitconfig"        "$HOME/.gitconfig"
-link_file "$DOTFILES/git/gitignore_global" "$HOME/.gitignore_global"
-link_file "$DOTFILES/ghostty/config"      "$HOME/.config/ghostty/config"
-link_file "$DOTFILES/nvim"                "$HOME/.config/nvim"
-
-# Generate tmux-local.conf with AI keybindings
-TMUX_LOCAL="$HOME/.tmux-local.conf"
-echo "# Machine-specific tmux config (generated by install.sh)" > "$TMUX_LOCAL"
-echo "# AI assistant keybindings" >> "$TMUX_LOCAL"
-
-for ai in "${AI_ASSISTANTS[@]}"; do
-    case "$ai" in
-        claude)
-            echo 'bind t split-window -v -c "#{pane_current_path}" \; send-keys "clear && claude --dangerously-skip-permissions" Enter \; select-layout tiled' >> "$TMUX_LOCAL"
-            echo "Added Claude keybinding (prefix + t)"
-            ;;
-        gemini)
-            echo 'bind g split-window -v -c "#{pane_current_path}" \; send-keys "clear && gemini" Enter \; select-layout tiled' >> "$TMUX_LOCAL"
-            echo "Added Gemini keybinding (prefix + g)"
-            ;;
-    esac
 done
+
+# Also remove old stow-managed links that may conflict
+OLD_CONFIG_LINKS=(
+    "$REAL_HOME/.config/nvim"
+    "$REAL_HOME/.config/starship.toml"
+    "$REAL_HOME/.config/ghostty/config"
+)
+for old in "${OLD_CONFIG_LINKS[@]}"; do
+    if [[ -L "$old" ]]; then
+        echo "  Removing old symlink: $old"
+        rm "$old"
+    fi
+done
+
+# Back up existing regular files that would conflict with stow
+STOW_TARGETS=(
+    "$REAL_HOME/.config/git/config"
+    "$REAL_HOME/.config/git/ignore"
+    "$REAL_HOME/.config/tmux/tmux.conf"
+    "$REAL_HOME/.config/nvim/init.lua"
+    "$REAL_HOME/.config/nvim/lazy-lock.json"
+    "$REAL_HOME/.config/starship.toml"
+    "$REAL_HOME/.config/ghostty/config"
+)
+for target in "${STOW_TARGETS[@]}"; do
+    if [[ -e "$target" && ! -L "$target" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up existing file: $target -> $BACKUP_DIR/"
+        mv "$target" "$BACKUP_DIR/"
+    fi
+done
+# Also handle directories (e.g. ~/.config/zsh already exists as a real dir)
+for dir in "$REAL_HOME/.config/nvim" "$REAL_HOME/.config/zsh"; do
+    if [[ -d "$dir" && ! -L "$dir" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        echo "  Backing up existing directory: $dir -> $BACKUP_DIR/"
+        mv "$dir" "$BACKUP_DIR/"
+    fi
+done
+
+# Stow all packages
+echo ""
+echo "Stowing dotfiles..."
+run_as_user stow -v -t "$REAL_HOME" -d "$DOTFILES" "${STOW_PACKAGES[@]}"
+
+# Generate tmux local.conf with AI keybindings
+TMUX_LOCAL="$REAL_HOME/.config/tmux/local.conf"
+{
+    echo "# Machine-specific tmux config (generated by install.sh)"
+    echo "# AI assistant keybindings"
+    for ai in "${AI_ASSISTANTS[@]}"; do
+        case "$ai" in
+            claude)
+                echo 'bind t split-window -v -c "#{pane_current_path}" \; send-keys "clear && claude --dangerously-skip-permissions" Enter \; select-layout tiled'
+                echo "Added Claude keybinding (prefix + t)" >&2
+                ;;
+            gemini)
+                echo 'bind g split-window -v -c "#{pane_current_path}" \; send-keys "clear && gemini" Enter \; select-layout tiled'
+                echo "Added Gemini keybinding (prefix + g)" >&2
+                ;;
+        esac
+    done
+} > "$TMUX_LOCAL"
 echo "Generated $TMUX_LOCAL"
 
+# Git identity prompt
+GIT_LOCAL="$REAL_HOME/.config/git/config.local"
+if [[ ! -f "$GIT_LOCAL" ]]; then
+    echo ""
+    echo "Setting up git identity..."
+    read -p "Your full name (for git commits): " git_name
+    read -p "Your email (matching your GitHub account): " git_email
+    cat > "$GIT_LOCAL" <<EOF
+[user]
+    name = $git_name
+    email = $git_email
+EOF
+    echo "Created $GIT_LOCAL"
+else
+    echo "Git identity already configured ($GIT_LOCAL)"
+fi
+
 # Zshrc loader block
-ZSHRC="$HOME/.zshrc"
+ZSHRC="$REAL_HOME/.zshrc"
 MARKER="# >>> dotfiles >>>"
-if ! grep -qF "$MARKER" "$ZSHRC" 2>/dev/null; then
-    echo "" >> "$ZSHRC"
-    cat >> "$ZSHRC" <<'EOF'
+
+# Remove any old unmarked loader that sources ~/.zsh/
+if grep -qE 'for .* in ~/\.zsh/\*\.zsh' "$ZSHRC" 2>/dev/null; then
+    echo "Removing old zsh loader block from ~/.zshrc..."
+    sed -i.bak '/for .* in ~\/\.zsh\/\*\.zsh/,/done/d' "$ZSHRC"
+    rm -f "$ZSHRC.bak"
+fi
+
+if grep -qF "$MARKER" "$ZSHRC" 2>/dev/null; then
+    echo "Loader block already in ~/.zshrc"
+else
+    cat >> "$ZSHRC" <<EOF
+
 # >>> dotfiles >>>
-for f in ~/.zsh/*.zsh; do source "$f"; done
-eval "$(starship init zsh)"
+export DOTFILES_DIR="$DOTFILES"
+for f in ~/.config/zsh/*.zsh; do source "\$f"; done
+eval "\$(starship init zsh)"
 # <<< dotfiles <<<
 EOF
     echo "Added loader block to ~/.zshrc"
-else
-    echo "Loader block already in ~/.zshrc, skipping"
 fi
 
 # TPM
-TPM_DIR="$HOME/.tmux/plugins/tpm"
+TPM_DIR="$REAL_HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
     echo "Installing TPM..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
+    run_as_user git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
 else
     echo "TPM already installed"
 fi
 
 # Install Treesitter parsers
-# The nvim-treesitter install() is async and unreliable in headless mode,
-# so we compile parsers directly from cached sources.
-PARSER_DIR="$HOME/.local/share/nvim/site/parser"
-mkdir -p "$PARSER_DIR"
+PARSER_DIR="$REAL_HOME/.local/share/nvim/site/parser"
+run_as_user mkdir -p "$PARSER_DIR"
 
 TS_LANGS=(bash c css dockerfile go html javascript json lua markdown python rust terraform toml typescript yaml)
 
@@ -328,11 +427,11 @@ if [[ "$all_compiled" == true ]]; then
     echo "  All parsers already compiled, skipping download"
 else
     # Trigger downloads by running nvim briefly
-    nvim --headless -c "lua require('nvim-treesitter').install({$(printf "'%s'," "${TS_LANGS[@]}")})" -c "sleep 15" -c "qa" 2>&1 | cat
+    run_as_user nvim --headless -c "lua require('nvim-treesitter').install({$(printf "'%s'," "${TS_LANGS[@]}")})" -c "sleep 15" -c "qa" 2>&1 | cat
 fi
 
 # Compile each parser from cached sources
-TS_CACHE="$HOME/.cache/nvim"
+TS_CACHE="$REAL_HOME/.cache/nvim"
 compile_parser() {
     local lang="$1"
     local src_dir="$2"
@@ -348,12 +447,11 @@ compile_parser() {
     echo "  $lang: compiling..."
     local srcs=("$src_dir/parser.c")
     [[ -f "$src_dir/scanner.c" ]] && srcs+=("$src_dir/scanner.c")
-    cc -shared -o "$out" -I "$src_dir" "${srcs[@]}" -O2 2>&1 || echo "  $lang: compilation failed"
+    run_as_user cc -shared -o "$out" -I "$src_dir" "${srcs[@]}" -O2 2>&1 || echo "  $lang: compilation failed"
 }
 
 for lang in "${TS_LANGS[@]}"; do
     src_dir="$TS_CACHE/tree-sitter-$lang/src"
-    # Some parsers have nested source layouts
     if [[ ! -d "$src_dir" ]]; then
         src_dir="$TS_CACHE/tree-sitter-$lang/$lang/src"
     fi
@@ -372,14 +470,8 @@ echo ""
 echo "Done!"
 
 NOTES=()
-if [[ ! -d "$HOME/.tmux/plugins/catppuccin" ]]; then
+if [[ ! -d "$REAL_HOME/.tmux/plugins/catppuccin" ]]; then
     NOTES+=("  - In tmux, press prefix + I to install plugins")
-fi
-if [[ ! -f "$HOME/.gitconfig.local" ]]; then
-    NOTES+=("  - Create ~/.gitconfig.local with your name/email:"
-            "      [user]"
-            "        name = Your Name"
-            "        email = you@example.com")
 fi
 if [[ ${#NOTES[@]} -gt 0 ]]; then
     echo ""

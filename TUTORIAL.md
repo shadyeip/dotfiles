@@ -307,7 +307,7 @@ Enter copy mode with `prefix + [`, then:
 
 ### Zsh
 
-Source: `.zsh/keybindings.zsh`
+Source: `zsh/.config/zsh/04-keybindings.zsh`
 
 #### Word & Line Navigation
 
@@ -325,7 +325,7 @@ Source: `.zsh/keybindings.zsh`
 | `Ctrl-S` | Search history forward |
 | `Ctrl-P` / `Ctrl-N` | Previous / Next history (with search) |
 
-#### FZF — sourced via `.zsh/plugins.zsh`
+#### FZF — sourced via `zsh/.config/zsh/02-plugins.zsh`
 
 | Key | Action |
 |-----|--------|
