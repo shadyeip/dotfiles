@@ -18,9 +18,8 @@ _zsh_plugin_install() {
 _zsh_plugin_install "zsh-users/zsh-autosuggestions"
 source "$ZSH_PLUGIN_DIR/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
-# zsh-syntax-highlighting — colorize commands as you type
+# zsh-syntax-highlighting — installed here, sourced last in 08-syntax-highlighting.zsh
 _zsh_plugin_install "zsh-users/zsh-syntax-highlighting"
-source "$ZSH_PLUGIN_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # fzf keybindings and completions
 if command -v fzf &>/dev/null; then

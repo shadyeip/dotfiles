@@ -1,7 +1,7 @@
 # File: ~/.config/zsh/03-completions.zsh
 
-# Completion system is initialized by Oh My Zsh (compinit).
-# This file configures completion styles only.
+# Initialize completion system
+autoload -Uz compinit && compinit -C
 
 # Cache completion to speed things up
 zstyle ':completion::complete:*' use-cache on

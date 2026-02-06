@@ -12,9 +12,7 @@ bindkey "[D" backward-word     # Option + Left Arrow
 bindkey "^A" beginning-of-line
 bindkey "^E" end-of-line
 
-# History search
-bindkey "^R" history-incremental-search-backward
-bindkey "^S" history-incremental-search-forward
+# History search (Ctrl-R is handled by fzf in 02-plugins.zsh)
 
 # Up/down line or search
 bindkey "^P" up-line-or-search
