@@ -27,7 +27,7 @@ if [[ "${1:-}" == "--verify" ]]; then
     errors=0
 
     # Check dependencies
-    for cmd in zsh stow starship nvim gcc fzf rg git tmux node go; do
+    for cmd in zsh stow starship nvim gcc fzf rg git tmux node npm go; do
         if command -v "$cmd" &>/dev/null; then
             echo "  [ok] $cmd"
         else
@@ -152,6 +152,30 @@ case "$ai_choice" in
 esac
 echo "Selected: ${AI_ASSISTANTS[*]}"
 
+# Install Node.js if not present (needed for npm, Mason LSP servers like pyright)
+if ! command -v node &>/dev/null; then
+    echo "Installing Node.js..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install node
+    else
+        sudo apt install -y nodejs npm
+    fi
+else
+    echo "Node.js already installed"
+fi
+
+# Install npm if not present (needed for AI CLI tools and Mason)
+if ! command -v npm &>/dev/null; then
+    echo "Installing npm..."
+    if [[ "$OS" == "macos" ]]; then
+        brew install npm
+    else
+        sudo apt install -y npm
+    fi
+else
+    echo "npm already installed"
+fi
+
 # Install Claude CLI if selected
 if [[ " ${AI_ASSISTANTS[*]} " =~ " claude " ]]; then
     if ! command -v claude &>/dev/null; then
@@ -250,18 +274,6 @@ if ! command -v rg &>/dev/null; then
     fi
 else
     echo "ripgrep already installed"
-fi
-
-# Install Node.js if not present (needed for Mason LSP servers like pyright)
-if ! command -v node &>/dev/null; then
-    echo "Installing Node.js..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install node
-    else
-        sudo apt install -y nodejs npm
-    fi
-else
-    echo "Node.js already installed"
 fi
 
 # Install Go if not present (needed for Mason LSP servers like gopls)
