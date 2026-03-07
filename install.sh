@@ -169,6 +169,8 @@ if ! command -v node &>/dev/null; then
         curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
         sudo apt install -y nodejs
     fi
+    # Refresh shell command cache so node/npm are found immediately
+    hash -r
 else
     echo "Node.js already installed"
 fi
@@ -183,6 +185,7 @@ if ! command -v npm &>/dev/null; then
         # If we get here, Node was installed without npm — install it directly
         sudo apt install -y npm
     fi
+    hash -r
 else
     echo "npm already installed"
 fi
