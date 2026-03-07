@@ -34,3 +34,6 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linuxbrew
     [[ -d /home/linuxbrew/.linuxbrew/bin ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 fi
+
+# npm global packages (installed without sudo via npm config prefix)
+[[ -d "$HOME/.local/share/npm-global/bin" ]] && export PATH="$HOME/.local/share/npm-global/bin:$PATH"
