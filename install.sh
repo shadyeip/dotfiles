@@ -152,13 +152,22 @@ case "$ai_choice" in
 esac
 echo "Selected: ${AI_ASSISTANTS[*]}"
 
+# Install prerequisites on Linux
+if [[ "$OS" == "linux" ]]; then
+    echo "Installing prerequisites..."
+    sudo apt update
+    sudo apt install -y curl software-properties-common
+fi
+
 # Install Node.js if not present (needed for npm, Mason LSP servers like pyright)
 if ! command -v node &>/dev/null; then
     echo "Installing Node.js..."
     if [[ "$OS" == "macos" ]]; then
         brew install node
     else
-        sudo apt install -y nodejs npm
+        # Debian/Ubuntu repos ship very old Node.js; use NodeSource for v22 LTS
+        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+        sudo apt install -y nodejs
     fi
 else
     echo "Node.js already installed"
@@ -170,6 +179,8 @@ if ! command -v npm &>/dev/null; then
     if [[ "$OS" == "macos" ]]; then
         brew install npm
     else
+        # npm is bundled with NodeSource's nodejs package
+        # If we get here, Node was installed without npm — install it directly
         sudo apt install -y npm
     fi
 else
@@ -234,6 +245,9 @@ if ! command -v nvim &>/dev/null; then
     if [[ "$OS" == "macos" ]]; then
         brew install neovim
     else
+        # Debian/Ubuntu repos ship very old Neovim; use the official PPA for 0.9+
+        sudo add-apt-repository -y ppa:neovim-ppa/unstable
+        sudo apt update
         sudo apt install -y neovim
     fi
 else
@@ -459,7 +473,11 @@ compile_parser() {
     echo "  $lang: compiling..."
     local srcs=("$src_dir/parser.c")
     [[ -f "$src_dir/scanner.c" ]] && srcs+=("$src_dir/scanner.c")
-    run_as_user cc -shared -o "$out" -I "$src_dir" "${srcs[@]}" -O2 2>&1 || echo "  $lang: compilation failed"
+    local cc_flags=(-shared -o "$out" -I "$src_dir" "${srcs[@]}" -O2)
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        cc_flags+=(-fPIC)
+    fi
+    run_as_user gcc "${cc_flags[@]}" 2>&1 || echo "  $lang: compilation failed"
 }
 
 for lang in "${TS_LANGS[@]}"; do
