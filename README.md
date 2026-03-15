@@ -30,11 +30,44 @@ Each top-level directory is a stow package. Running `stow -t ~ git tmux nvim sta
 
 ## Prerequisites
 
+`install.sh` installs these automatically on macOS and Debian/Ubuntu.
+
 - zsh
 - [GNU Stow](https://www.gnu.org/software/stow/)
 - [Starship](https://starship.rs)
 - tmux
 - git
+
+If you prefer to install them manually first:
+
+### macOS
+
+Install Homebrew (if needed):
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Install prerequisites:
+
+```sh
+brew install zsh stow starship tmux git
+chsh -s "$(command -v zsh)"
+```
+
+Then log out and back in (or restart your terminal).
+
+### Debian/Ubuntu
+
+```sh
+sudo apt update
+sudo apt install -y zsh stow tmux git curl
+command -v zsh | sudo tee -a /etc/shells
+chsh -s "$(command -v zsh)"
+curl -sS https://starship.rs/install.sh | sh -s -- --yes
+```
+
+Then log out and back in (or restart your terminal).
 
 ## Install
 
@@ -54,9 +87,10 @@ The install script will:
 1. Install dependencies (stow, starship, neovim, fzf, ripgrep, etc.)
 2. Remove any old-style symlinks from a previous layout
 3. Stow all packages to `~/.config/`
-4. Prompt for your git identity (name/email) if not configured
-5. Prompt for AI assistant selection (Claude/Gemini)
-6. Install TPM and Treesitter parsers
+4. Set your default login shell to zsh (if needed)
+5. Prompt for your git identity (name/email) if not configured
+6. Prompt for AI assistant selection (Claude/Gemini)
+7. Install TPM and Treesitter parsers
 
 After install, open tmux and press `prefix + I` to install tmux plugins.
 

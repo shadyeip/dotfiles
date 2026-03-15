@@ -288,6 +288,45 @@ else
     echo "Go already installed"
 fi
 
+# Set default login shell to zsh for target user
+ZSH_PATH="$(command -v zsh)"
+CURRENT_LOGIN_SHELL=""
+
+if command -v getent &>/dev/null; then
+    CURRENT_LOGIN_SHELL="$(getent passwd "$REAL_USER" | cut -d: -f7 || true)"
+elif [[ "$OS" == "macos" ]] && command -v dscl &>/dev/null; then
+    CURRENT_LOGIN_SHELL="$(dscl . -read "/Users/$REAL_USER" UserShell 2>/dev/null | awk '{print $2}' || true)"
+fi
+
+if [[ "$CURRENT_LOGIN_SHELL" == "$ZSH_PATH" ]]; then
+    echo "Default shell already set to zsh for $REAL_USER"
+else
+    echo "Setting default shell to zsh for $REAL_USER..."
+
+    if [[ "$OS" == "linux" ]] && ! grep -qxF "$ZSH_PATH" /etc/shells 2>/dev/null; then
+        echo "Adding $ZSH_PATH to /etc/shells"
+        if [[ -n "${SUDO_USER:-}" ]]; then
+            echo "$ZSH_PATH" >> /etc/shells
+        else
+            echo "$ZSH_PATH" | sudo tee -a /etc/shells >/dev/null
+        fi
+    fi
+
+    if [[ -n "${SUDO_USER:-}" ]]; then
+        if chsh -s "$ZSH_PATH" "$REAL_USER"; then
+            echo "Default shell updated to zsh for $REAL_USER"
+        else
+            echo "Warning: could not set default shell automatically. Run: sudo chsh -s \"$ZSH_PATH\" \"$REAL_USER\""
+        fi
+    else
+        if chsh -s "$ZSH_PATH"; then
+            echo "Default shell updated to zsh"
+        else
+            echo "Warning: could not set default shell automatically. Run: chsh -s \"$ZSH_PATH\""
+        fi
+    fi
+fi
+
 # Migration: remove old symlinks from previous dotfiles layout
 echo ""
 echo "Cleaning up old symlinks..."
