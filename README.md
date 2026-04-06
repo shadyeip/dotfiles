@@ -116,7 +116,6 @@ Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixe
 4. `04-keybindings.zsh` — key bindings
 5. `05-aliases.zsh` — aliases
 6. `06-functions.zsh` — functions
-7. `07-gcloud.zsh` — optional gcloud (conditional)
 
 ## Tmux Keybindings
 

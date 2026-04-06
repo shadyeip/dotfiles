@@ -49,11 +49,6 @@ format = "[$symbol$workspace]($style) "
 symbol = "󱁢 "
 style = "mauve"
 
-[gcloud]
-format = "[$symbol$project]($style) "
-symbol = " "
-style = "sapphire"
-
 [character]
 success_symbol = "[>](bold green)"
 error_symbol = "[>](bold red)"
