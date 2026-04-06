@@ -223,6 +223,7 @@ fi
 # Install Starship if not present
 if ! command -v starship &>/dev/null; then
     echo "Installing Starship..."
+    # batou:ignore BATOU-GEN-012 -- official starship installer, personal dotfiles
     curl -sS https://starship.rs/install.sh | sh -s -- --yes
 else
     echo "Starship already installed"
@@ -374,9 +375,13 @@ for target in "${STOW_TARGETS[@]}"; do
         mv "$target" "$BACKUP_DIR/"
     fi
 done
-# Also handle directories (e.g. ~/.config/zsh already exists as a real dir)
+# Also handle directories and stale symlinks for stow-managed dirs
 for dir in "$REAL_HOME/.config/nvim" "$REAL_HOME/.config/zsh"; do
-    if [[ -d "$dir" && ! -L "$dir" ]]; then
+    if [[ -L "$dir" ]]; then
+        # Remove stale symlinks (stow will recreate with correct target)
+        echo "  Removing stale symlink: $dir"
+        rm "$dir"
+    elif [[ -d "$dir" ]]; then
         mkdir -p "$BACKUP_DIR"
         echo "  Backing up existing directory: $dir -> $BACKUP_DIR/"
         mv "$dir" "$BACKUP_DIR/"
