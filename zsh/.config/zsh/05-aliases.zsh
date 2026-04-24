@@ -110,3 +110,5 @@ fi
 # starship
 alias se='starship explain'
 alias prompt='starship explain'
+
+alias ls-downloads='ls -ltr ~/Downloads'

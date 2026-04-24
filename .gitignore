@@ -1,5 +1,6 @@
 zsh/.config/zsh/plugins/
 tmux/.config/tmux/local.conf
+tmux/.config/tmux/plugins/
 git/.config/git/config.local
 .claude/
 .batou/
