@@ -21,12 +21,5 @@ cursor-style-blink = false
 clipboard-read = allow
 clipboard-write = allow
 
-# Ctrl+V to paste, Ctrl+C to copy.
-# `performable:` on Ctrl+C means it only copies when there's a selection;
-# with no selection the keypress falls through to the terminal as SIGINT,
-# so Ctrl+C still interrupts running programs as usual.
-keybind = ctrl+v=paste_from_clipboard
-keybind = performable:ctrl+c=copy_to_clipboard
-
 # Shell
 shell-integration = zsh
