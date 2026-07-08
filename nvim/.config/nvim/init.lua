@@ -19,6 +19,21 @@ vim.opt.smartindent = true
 vim.opt.termguicolors = true
 vim.opt.signcolumn = "yes"
 vim.opt.clipboard = "unnamedplus"
+
+-- Over SSH there is no local clipboard tool (no pbcopy/wl-copy on the remote
+-- box), so route the system registers through OSC 52 escape sequences. The
+-- terminal on your *local* machine (e.g. Ghostty on the Mac) turns them into
+-- real clipboard reads/writes. Only enabled inside SSH sessions so local use
+-- keeps the native provider. Requires Neovim >= 0.10.
+if (vim.env.SSH_TTY or "") ~= "" then
+  local osc52 = require("vim.ui.clipboard.osc52")
+  vim.g.clipboard = {
+    name = "OSC 52",
+    copy = { ["+"] = osc52.copy("+"), ["*"] = osc52.copy("*") },
+    paste = { ["+"] = osc52.paste("+"), ["*"] = osc52.paste("*") },
+  }
+end
+
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.scrolloff = 8
