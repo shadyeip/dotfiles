@@ -1,6 +1,56 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+ASSUME_YES=false
+VERIFY=false
+
+usage() {
+    cat <<'EOF'
+Usage: ./install.sh [options]
+
+Options:
+  --verify    Check symlinks and dependencies, then exit (no changes made)
+  -y, --yes   Assume "yes" to all confirmation prompts (non-interactive)
+  -h, --help  Show this help and exit
+
+This script installs developer tooling (zsh, stow, starship, neovim, fzf,
+ripgrep, gcc, Node.js/npm, Go) and stows the dotfiles into ~/.config.
+It does NOT install any AI assistant tooling.
+
+Privileged or system-wide actions (package installs, editing /etc/shells,
+changing your login shell, running a downloaded installer) always ask for
+confirmation first unless --yes is given. Answering "no" skips that step.
+EOF
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        --verify) VERIFY=true ;;
+        -y|--yes) ASSUME_YES=true ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $arg" >&2; usage >&2; exit 1 ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# Confirmation helper — defaults to "no" when non-interactive and no --yes,
+# so nothing privileged happens without an explicit opt-in.
+# ---------------------------------------------------------------------------
+confirm() {
+    if [[ "$ASSUME_YES" == true ]]; then
+        return 0
+    fi
+    local reply
+    if ! read -r -p "$1 [y/N]: " reply; then
+        echo   # newline after EOF
+        return 1
+    fi
+    [[ "$reply" =~ ^[Yy]([Ee][Ss])?$ ]]
+}
+
 # Detect real user when running with sudo
 if [[ -n "${SUDO_USER:-}" ]]; then
     REAL_USER="$SUDO_USER"
@@ -19,10 +69,26 @@ fi
 
 DOTFILES="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_DIR="$REAL_HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
-STOW_PACKAGES=(git tmux nvim starship ghostty zsh)
+
+# Detect OS (needed to decide which packages/configs are relevant)
+OS="unknown"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macos"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS="linux"
+fi
+
+# Ghostty is a GUI terminal emulator: it belongs on the desktop machine (the
+# macOS host), not on a headless Linux box you SSH into. Its config is only
+# stowed on macOS. Shell/editor configs (zsh, tmux, nvim, starship, git) are
+# stowed on every machine.
+STOW_PACKAGES=(git tmux nvim starship zsh)
+if [[ "$OS" == "macos" ]]; then
+    STOW_PACKAGES+=(ghostty)
+fi
 
 # --verify mode: check symlinks and dependencies, then exit
-if [[ "${1:-}" == "--verify" ]]; then
+if [[ "$VERIFY" == true ]]; then
     echo "Verifying dotfiles installation..."
     errors=0
 
@@ -51,7 +117,9 @@ if [[ "${1:-}" == "--verify" ]]; then
     check_path "$REAL_HOME/.config/tmux/tmux.conf"
     check_path "$REAL_HOME/.config/nvim/init.lua"
     check_path "$REAL_HOME/.config/starship.toml"
-    check_path "$REAL_HOME/.config/ghostty/config"
+    if [[ "$OS" == "macos" ]]; then
+        check_path "$REAL_HOME/.config/ghostty/config"
+    fi
     check_path "$REAL_HOME/.config/zsh/01-exports.zsh"
 
     # Check zshrc loader block
@@ -70,27 +138,11 @@ if [[ "${1:-}" == "--verify" ]]; then
         errors=$((errors + 1))
     fi
 
-    # Check tmux local.conf and AI CLIs
+    # Check tmux local.conf
     if [[ -f "$REAL_HOME/.config/tmux/local.conf" ]]; then
         echo "  [ok] tmux local.conf"
-        if grep -q "claude" "$REAL_HOME/.config/tmux/local.conf"; then
-            if command -v claude &>/dev/null; then
-                echo "  [ok] claude CLI"
-            else
-                echo "  [MISSING] claude CLI"
-                errors=$((errors + 1))
-            fi
-        fi
-        if grep -q "gemini" "$REAL_HOME/.config/tmux/local.conf"; then
-            if command -v gemini &>/dev/null; then
-                echo "  [ok] gemini CLI"
-            else
-                echo "  [MISSING] gemini CLI"
-                errors=$((errors + 1))
-            fi
-        fi
     else
-        echo "  [MISSING] tmux local.conf (run install.sh to configure AI assistant)"
+        echo "  [MISSING] tmux local.conf (run install.sh to generate it)"
         errors=$((errors + 1))
     fi
 
@@ -126,84 +178,66 @@ if [[ "${1:-}" == "--verify" ]]; then
     exit $errors
 fi
 
-# Detect OS
-OS="unknown"
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    OS="macos"
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    OS="linux"
-fi
 echo "Detected OS: $OS"
 
-# AI Assistant selection
-echo ""
-echo "Which AI assistant(s) do you want to use?"
-echo "  1) Claude"
-echo "  2) Gemini"
-echo "  3) Both"
-echo ""
-read -p "Select [1-3]: " ai_choice
+# ---------------------------------------------------------------------------
+# Package installation — asks once for consent to install missing packages,
+# then reuses that answer for the rest of the run.
+# ---------------------------------------------------------------------------
+PKG_CONSENT=""   # "", "yes", or "no"
 
-case "$ai_choice" in
-    1) AI_ASSISTANTS=("claude") ;;
-    2) AI_ASSISTANTS=("gemini") ;;
-    3) AI_ASSISTANTS=("claude" "gemini") ;;
-    *) echo "Invalid selection, defaulting to Claude"; AI_ASSISTANTS=("claude") ;;
-esac
-echo "Selected: ${AI_ASSISTANTS[*]}"
+ensure_pkg_consent() {
+    case "$PKG_CONSENT" in
+        yes) return 0 ;;
+        no)  return 1 ;;
+    esac
+    local via
+    if [[ "$OS" == "macos" ]]; then via="brew"; else via="sudo apt"; fi
+    if confirm "Install missing packages using '$via'?"; then
+        PKG_CONSENT="yes"
+        return 0
+    else
+        PKG_CONSENT="no"
+        echo "Skipping package installation. Missing tools will need manual install."
+        return 1
+    fi
+}
 
-# Install Node.js if not present (needed for npm, Mason LSP servers like pyright)
+# pkg_install <label> <brew_formula> [apt_pkg...]
+pkg_install() {
+    local label="$1" brew_pkg="$2"
+    shift 2
+    if ! ensure_pkg_consent; then
+        echo "  Skipped $label"
+        return 0
+    fi
+    if [[ "$OS" == "macos" ]]; then
+        brew install "$brew_pkg"
+    else
+        sudo apt install -y "$@"
+    fi
+}
+
+# Install Node.js if not present (needed for npm + Mason LSP servers like pyright)
 if ! command -v node &>/dev/null; then
     echo "Installing Node.js..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install node
-    else
-        sudo apt install -y nodejs npm
-    fi
+    pkg_install "Node.js" node nodejs npm
 else
     echo "Node.js already installed"
 fi
 
-# Install npm if not present (needed for AI CLI tools and Mason)
+# Install npm if not present (needed for Mason LSP servers)
 if ! command -v npm &>/dev/null; then
     echo "Installing npm..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install npm
-    else
-        sudo apt install -y npm
-    fi
+    pkg_install "npm" npm npm
 else
     echo "npm already installed"
-fi
-
-# Install Claude CLI if selected
-if [[ " ${AI_ASSISTANTS[*]} " =~ " claude " ]]; then
-    if ! command -v claude &>/dev/null; then
-        echo "Installing Claude CLI..."
-        run_as_user npm install -g @anthropic-ai/claude-code
-    else
-        echo "Claude CLI already installed"
-    fi
-fi
-
-# Install Gemini CLI if selected
-if [[ " ${AI_ASSISTANTS[*]} " =~ " gemini " ]]; then
-    if ! command -v gemini &>/dev/null; then
-        echo "Installing Gemini CLI..."
-        run_as_user npm install -g @google/gemini-cli
-    else
-        echo "Gemini CLI already installed"
-    fi
 fi
 
 # Install zsh if not present
 if ! command -v zsh &>/dev/null; then
     echo "Installing zsh..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install zsh
-    else
-        sudo apt install -y zsh
-    fi
+    pkg_install "zsh" zsh zsh
 else
     echo "zsh already installed"
 fi
@@ -211,11 +245,7 @@ fi
 # Install stow if not present
 if ! command -v stow &>/dev/null; then
     echo "Installing stow..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install stow
-    else
-        sudo apt install -y stow
-    fi
+    pkg_install "stow" stow stow
 else
     echo "stow already installed"
 fi
@@ -223,8 +253,27 @@ fi
 # Install Starship if not present
 if ! command -v starship &>/dev/null; then
     echo "Installing Starship..."
-    # batou:ignore BATOU-GEN-012 -- official starship installer, personal dotfiles
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    if [[ "$OS" == "macos" ]]; then
+        pkg_install "Starship" starship
+    else
+        # No Starship package in the default apt repos, so use the official
+        # installer — but download it first so it can be inspected, and only
+        # run it after confirmation, instead of piping curl straight to sh.
+        if ensure_pkg_consent; then
+            starship_installer="$(mktemp)"
+            echo "Downloading Starship installer to $starship_installer ..."
+            curl -fsSL https://starship.rs/install.sh -o "$starship_installer"
+            echo "  Downloaded ($(wc -l < "$starship_installer") lines). Inspect with: less $starship_installer"
+            if confirm "Run the downloaded Starship installer?"; then
+                sh "$starship_installer" -- --yes
+            else
+                echo "  Skipped Starship. Install manually later: https://starship.rs"
+            fi
+            rm -f "$starship_installer"
+        else
+            echo "  Skipped Starship"
+        fi
+    fi
 else
     echo "Starship already installed"
 fi
@@ -232,11 +281,7 @@ fi
 # Install Neovim if not present
 if ! command -v nvim &>/dev/null; then
     echo "Installing Neovim..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install neovim
-    else
-        sudo apt install -y neovim
-    fi
+    pkg_install "Neovim" neovim neovim
 else
     echo "Neovim already installed"
 fi
@@ -244,11 +289,7 @@ fi
 # Install gcc (needed for Treesitter parser compilation)
 if ! command -v gcc &>/dev/null; then
     echo "Installing gcc..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install gcc
-    else
-        sudo apt install -y build-essential
-    fi
+    pkg_install "gcc" gcc build-essential
 else
     echo "gcc already installed"
 fi
@@ -256,11 +297,7 @@ fi
 # Install fzf if not present
 if ! command -v fzf &>/dev/null; then
     echo "Installing fzf..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install fzf
-    else
-        sudo apt install -y fzf
-    fi
+    pkg_install "fzf" fzf fzf
 else
     echo "fzf already installed"
 fi
@@ -268,11 +305,7 @@ fi
 # Install ripgrep if not present (needed for Telescope live grep)
 if ! command -v rg &>/dev/null; then
     echo "Installing ripgrep..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install ripgrep
-    else
-        sudo apt install -y ripgrep
-    fi
+    pkg_install "ripgrep" ripgrep ripgrep
 else
     echo "ripgrep already installed"
 fi
@@ -280,17 +313,13 @@ fi
 # Install Go if not present (needed for Mason LSP servers like gopls)
 if ! command -v go &>/dev/null; then
     echo "Installing Go..."
-    if [[ "$OS" == "macos" ]]; then
-        brew install go
-    else
-        sudo apt install -y golang
-    fi
+    pkg_install "Go" go golang
 else
     echo "Go already installed"
 fi
 
 # Set default login shell to zsh for target user
-ZSH_PATH="$(command -v zsh)"
+ZSH_PATH="$(command -v zsh || true)"
 CURRENT_LOGIN_SHELL=""
 
 if command -v getent &>/dev/null; then
@@ -299,9 +328,11 @@ elif [[ "$OS" == "macos" ]] && command -v dscl &>/dev/null; then
     CURRENT_LOGIN_SHELL="$(dscl . -read "/Users/$REAL_USER" UserShell 2>/dev/null | awk '{print $2}' || true)"
 fi
 
-if [[ "$CURRENT_LOGIN_SHELL" == "$ZSH_PATH" ]]; then
+if [[ -z "$ZSH_PATH" ]]; then
+    echo "zsh not found on PATH; skipping default-shell change."
+elif [[ "$CURRENT_LOGIN_SHELL" == "$ZSH_PATH" ]]; then
     echo "Default shell already set to zsh for $REAL_USER"
-else
+elif confirm "Set default login shell to zsh ($ZSH_PATH) for $REAL_USER?"; then
     echo "Setting default shell to zsh for $REAL_USER..."
 
     if [[ "$OS" == "linux" ]] && ! grep -qxF "$ZSH_PATH" /etc/shells 2>/dev/null; then
@@ -326,7 +357,26 @@ else
             echo "Warning: could not set default shell automatically. Run: chsh -s \"$ZSH_PATH\""
         fi
     fi
+else
+    echo "Skipped changing default shell. To do it later: chsh -s \"$ZSH_PATH\""
 fi
+
+# ---------------------------------------------------------------------------
+# Backup helpers — nothing with real content is ever removed without first
+# being copied into $BACKUP_DIR, and every removed symlink is logged there.
+# ---------------------------------------------------------------------------
+record_removed_symlink() {
+    local link="$1"
+    mkdir -p "$BACKUP_DIR"
+    printf '%s -> %s\n' "$link" "$(readlink "$link")" >> "$BACKUP_DIR/removed-symlinks.log"
+}
+
+backup_path() {
+    local target="$1"
+    mkdir -p "$BACKUP_DIR"
+    echo "  Backing up: $target -> $BACKUP_DIR/"
+    mv "$target" "$BACKUP_DIR/"
+}
 
 # Migration: remove old symlinks from previous dotfiles layout
 echo ""
@@ -340,7 +390,8 @@ OLD_LINKS=(
 )
 for old in "${OLD_LINKS[@]}"; do
     if [[ -L "$old" ]]; then
-        echo "  Removing old symlink: $old"
+        echo "  Removing old symlink: $old -> $(readlink "$old")"
+        record_removed_symlink "$old"
         rm "$old"
     fi
 done
@@ -353,7 +404,8 @@ OLD_CONFIG_LINKS=(
 )
 for old in "${OLD_CONFIG_LINKS[@]}"; do
     if [[ -L "$old" ]]; then
-        echo "  Removing old symlink: $old"
+        echo "  Removing old symlink: $old -> $(readlink "$old")"
+        record_removed_symlink "$old"
         rm "$old"
     fi
 done
@@ -370,56 +422,56 @@ STOW_TARGETS=(
 )
 for target in "${STOW_TARGETS[@]}"; do
     if [[ -e "$target" && ! -L "$target" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up existing file: $target -> $BACKUP_DIR/"
-        mv "$target" "$BACKUP_DIR/"
+        backup_path "$target"
     fi
 done
 # Also handle directories and stale symlinks for stow-managed dirs
 for dir in "$REAL_HOME/.config/nvim" "$REAL_HOME/.config/zsh"; do
     if [[ -L "$dir" ]]; then
-        # Remove stale symlinks (stow will recreate with correct target)
-        echo "  Removing stale symlink: $dir"
+        # Stale symlink — record where it pointed, then remove so stow can recreate it
+        echo "  Removing stale symlink: $dir -> $(readlink "$dir")"
+        record_removed_symlink "$dir"
         rm "$dir"
     elif [[ -d "$dir" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        echo "  Backing up existing directory: $dir -> $BACKUP_DIR/"
-        mv "$dir" "$BACKUP_DIR/"
+        backup_path "$dir"
     fi
 done
+
+if [[ -d "$BACKUP_DIR" ]]; then
+    echo "  Backups saved to: $BACKUP_DIR"
+fi
 
 # Stow all packages
 echo ""
 echo "Stowing dotfiles..."
-run_as_user stow -v -t "$REAL_HOME" -d "$DOTFILES" "${STOW_PACKAGES[@]}"
+if ! run_as_user stow -v -t "$REAL_HOME" -d "$DOTFILES" "${STOW_PACKAGES[@]}"; then
+    echo "Error: stow failed. Existing files may be in the way; check the output above." >&2
+    if [[ -d "$BACKUP_DIR" ]]; then
+        echo "Anything already backed up is in $BACKUP_DIR" >&2
+    fi
+    exit 1
+fi
 
-# Generate tmux local.conf with AI keybindings
+# Generate a machine-specific tmux local.conf placeholder (sourced by tmux.conf).
+# No AI assistant keybindings are configured.
 TMUX_LOCAL="$REAL_HOME/.config/tmux/local.conf"
-{
-    echo "# Machine-specific tmux config (generated by install.sh)"
-    echo "# AI assistant keybindings"
-    for ai in "${AI_ASSISTANTS[@]}"; do
-        case "$ai" in
-            claude)
-                echo 'bind t split-window -v -c "#{pane_current_path}" \; send-keys "clear && claude --dangerously-skip-permissions" Enter \; select-layout tiled'
-                echo "Added Claude keybinding (prefix + t)" >&2
-                ;;
-            gemini)
-                echo 'bind g split-window -v -c "#{pane_current_path}" \; send-keys "clear && gemini" Enter \; select-layout tiled'
-                echo "Added Gemini keybinding (prefix + g)" >&2
-                ;;
-        esac
-    done
-} > "$TMUX_LOCAL"
-echo "Generated $TMUX_LOCAL"
+if [[ -f "$TMUX_LOCAL" ]]; then
+    echo "tmux local.conf already exists, leaving it as-is: $TMUX_LOCAL"
+else
+    cat > "$TMUX_LOCAL" <<'EOF'
+# Machine-specific tmux config (generated by install.sh)
+# Add host-specific settings here.
+EOF
+    echo "Generated $TMUX_LOCAL"
+fi
 
 # Git identity prompt
 GIT_LOCAL="$REAL_HOME/.config/git/config.local"
 if [[ ! -f "$GIT_LOCAL" ]]; then
     echo ""
     echo "Setting up git identity..."
-    read -p "Your full name (for git commits): " git_name
-    read -p "Your email (matching your GitHub account): " git_email
+    read -r -p "Your full name (for git commits): " git_name
+    read -r -p "Your email (matching your GitHub account): " git_email
     cat > "$GIT_LOCAL" <<EOF
 [user]
     name = $git_name

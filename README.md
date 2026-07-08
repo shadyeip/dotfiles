@@ -9,7 +9,12 @@ Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux. Manage
 - **starship** - Matching Catppuccin Mocha prompt
 - **git** - Global config with common aliases
 - **nvim** - Neovim with lazy.nvim, Catppuccin, and Treesitter
-- **ghostty** - Terminal emulator config
+- **ghostty** - Terminal emulator config (macOS only — stowed on macOS hosts, skipped on Linux)
+
+Ghostty is a GUI terminal emulator, so its config is only relevant on the
+machine your terminal actually runs on. When you run `install.sh` on a Linux
+box (e.g. a remote/SSH VM), the `ghostty` package is skipped automatically and
+only the shell/editor configs are stowed.
 
 ## Structure
 
@@ -26,19 +31,32 @@ dotfiles/
 └── install.sh                # setup script
 ```
 
-Each top-level directory is a stow package. Running `stow -t ~ git tmux nvim starship ghostty zsh` creates symlinks from `~/.config/` into the repo.
+Each top-level directory is a stow package. On macOS, `install.sh` stows `git tmux nvim starship ghostty zsh`; on Linux it stows the same set minus `ghostty`. All create symlinks from `~/.config/` into the repo.
 
 ## Prerequisites
 
-`install.sh` installs these automatically on macOS and Debian/Ubuntu.
+You need `git` and `curl` already installed to clone the repo and bootstrap.
+`install.sh` installs everything else automatically on macOS and Debian/Ubuntu:
 
 - zsh
 - [GNU Stow](https://www.gnu.org/software/stow/)
 - [Starship](https://starship.rs)
-- tmux
-- git
+- Neovim
+- fzf
+- ripgrep
+- gcc (Debian: `build-essential`) — for compiling Treesitter parsers
+- Node.js + npm — for Neovim Mason LSP servers (pyright, ts_ls)
+- Go — for Neovim Mason LSP servers (gopls)
 
-If you prefer to install them manually first:
+The script does **not** install any AI assistant tooling, and it does **not**
+install `git` (you already have it — you used it to clone this repo).
+
+Privileged or system-wide steps (package installs, editing `/etc/shells`,
+changing your login shell, running the downloaded Starship installer) prompt
+for confirmation before running. Pass `--yes`/`-y` to accept all prompts for an
+unattended install. Answering "no" to any prompt skips just that step.
+
+If you prefer to install the dependencies manually first:
 
 ### macOS
 
@@ -51,7 +69,7 @@ Install Homebrew (if needed):
 Install prerequisites:
 
 ```sh
-brew install zsh stow starship tmux git
+brew install zsh stow starship tmux neovim fzf ripgrep gcc node go
 chsh -s "$(command -v zsh)"
 ```
 
@@ -61,7 +79,7 @@ Then log out and back in (or restart your terminal).
 
 ```sh
 sudo apt update
-sudo apt install -y zsh stow tmux git curl
+sudo apt install -y zsh stow tmux neovim fzf ripgrep build-essential nodejs npm golang git curl
 command -v zsh | sudo tee -a /etc/shells
 chsh -s "$(command -v zsh)"
 curl -sS https://starship.rs/install.sh | sh -s -- --yes
@@ -83,14 +101,33 @@ On Linux with sudo:
 sudo ./install.sh
 ```
 
+For an unattended run that accepts all confirmation prompts:
+
+```sh
+./install.sh --yes
+```
+
 The install script will:
-1. Install dependencies (stow, starship, neovim, fzf, ripgrep, etc.)
-2. Remove any old-style symlinks from a previous layout
-3. Stow all packages to `~/.config/`
-4. Set your default login shell to zsh (if needed)
+1. Install dependencies (stow, starship, neovim, fzf, ripgrep, Node.js/npm, Go, etc.) — asking before it installs anything system-wide
+2. Remove any old-style symlinks from a previous layout (backing up anything with real content to `~/.dotfiles_backup/`)
+3. Stow the packages to `~/.config/` (Ghostty only on macOS)
+4. Set your default login shell to zsh (with confirmation)
 5. Prompt for your git identity (name/email) if not configured
-6. Prompt for AI assistant selection (Claude/Gemini)
-7. Install TPM and Treesitter parsers
+6. Install TPM and Treesitter parsers
+
+No AI assistant tooling is installed.
+
+### Host (macOS) vs. remote (Linux) machines
+
+The same script works on both your Mac and a Linux box you SSH into:
+
+- **On your Mac** (where the terminal runs): stows everything, including the
+  Ghostty terminal config.
+- **On a Linux VM** (remote/SSH target): stows the shell + editor configs
+  (zsh, tmux, nvim, starship, git) and skips Ghostty, since there's no GUI
+  terminal there.
+
+Run `./install.sh` on each machine — it detects the OS and does the right thing.
 
 After install, open tmux and press `prefix + I` to install tmux plugins.
 
@@ -123,8 +160,6 @@ Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixe
 
 - `prefix -` — horizontal split
 - `prefix |` — vertical split
-- `prefix t` — open Claude in a split (if selected during install)
-- `prefix g` — open Gemini in a split (if selected during install)
 
 ### Pane Sync
 
