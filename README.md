@@ -28,7 +28,8 @@ dotfiles/
 ├── zsh/.config/zsh/          # → ~/.config/zsh/
 ├── Brewfile                  # macOS packages
 ├── apt-packages.txt          # Linux packages
-└── install.sh                # setup script
+├── install.sh                # setup script (installs packages + links configs)
+└── install-macos-configs.sh  # macOS, configs only — no packages, no Homebrew
 ```
 
 Each top-level directory is a stow package. On macOS, `install.sh` stows `git tmux nvim starship ghostty zsh`; on Linux it stows the same set minus `ghostty`. All create symlinks from `~/.config/` into the repo.
@@ -130,6 +131,37 @@ The same script works on both your Mac and a Linux box you SSH into:
 Run `./install.sh` on each machine — it detects the OS and does the right thing.
 
 After install, open tmux and press `prefix + I` to install tmux plugins.
+
+### macOS without Homebrew (configs only)
+
+On a locked-down Mac where you can't install Homebrew (e.g. a corporate
+machine), use the config-only installer instead:
+
+```sh
+git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+./install-macos-configs.sh
+```
+
+This links the same configs into `~/.config` and wires up `~/.zshrc`, but:
+
+- Installs **no packages** and needs **no Homebrew** — it doesn't even require
+  `stow` (it symlinks the configs directly).
+- Doesn't change your login shell (macOS already defaults to zsh).
+- Doesn't compile Neovim Treesitter parsers (that needs Neovim + a compiler).
+
+The shell config degrades gracefully when a tool is missing, so you get a
+working shell immediately. Install the individual tools (starship, tmux,
+neovim, fzf, ripgrep, node, go) by whatever means your machine allows — a
+self-service portal, or prebuilt binaries dropped into `~/.local/bin` — and
+they light up on the next shell. zsh plugins auto-install on first shell load
+(needs `git`, which ships with the Xcode Command Line Tools).
+
+Re-run any time to repair links, and check them with:
+
+```sh
+./install-macos-configs.sh --verify
+```
 
 For a detailed walkthrough of keybindings and vim motions, see [TUTORIAL.md](TUTORIAL.md).
 
