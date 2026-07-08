@@ -208,6 +208,31 @@ Formatters: black, prettier, stylua, gofmt, terraform_fmt (auto-format on save).
 
 LSP servers: pyright, gopls, lua_ls, ts_ls, terraformls (auto-installed via Mason).
 
+The config uses the `vim.lsp.config` API, which requires **Neovim ≥ 0.11**. On
+Linux, `install.sh` installs the official Neovim release rather than the (older)
+apt package for this reason; on macOS Homebrew's Neovim is current.
+
+## Remote coding over SSH
+
+Neovim runs on the machine where you edit — so if you SSH from your Mac into a
+Linux VM and run `nvim` there, the editor, its plugins, LSP servers and
+Treesitter parsers all live on the VM. Run `install.sh` on the VM to set them
+up (that's why it installs Node.js/Go/gcc there — Mason and the parsers need
+them). LSP running next to your code means no round-trip latency on completion
+and diagnostics.
+
+Two things are handled so the remote experience matches local:
+
+- **Clipboard** — the remote box has no `pbcopy`/`wl-copy`, so inside an SSH
+  session Neovim routes the system registers through **OSC 52** escape
+  sequences, which your local terminal turns into real clipboard operations.
+  tmux is configured with `set-clipboard on` + `allow-passthrough on` so the
+  escapes pass through, and Ghostty allows clipboard read/write. Yanks on the
+  VM land in your Mac's clipboard.
+- **Icons/fonts** — glyphs are drawn by the terminal on your *local* machine, so
+  the Nerd Font only needs to be installed there (configured in the Mac-side
+  `ghostty/config`), not on the VM.
+
 ## Git Config
 
 Git identity is stored in `~/.config/git/config.local` (created by `install.sh`):

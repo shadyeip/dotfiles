@@ -25,7 +25,11 @@ fi
 export PAGER='less'
 export LANG='en_US.UTF-8'
 export LC_ALL='en_US.UTF-8'
-export TERM='xterm-256color'
+# Only default TERM if the terminal/multiplexer didn't already set one. Don't
+# hardcode it: that would clobber the value tmux sets inside a session and the
+# real terminal's value over SSH, breaking colors/keys.
+: "${TERM:=xterm-256color}"
+export TERM
 
 # Conditional PATH additions (Homebrew on macOS is handled by .zprofile)
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then

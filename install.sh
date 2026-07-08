@@ -278,12 +278,60 @@ else
     echo "Starship already installed"
 fi
 
-# Install Neovim if not present
-if ! command -v nvim &>/dev/null; then
-    echo "Installing Neovim..."
-    pkg_install "Neovim" neovim neovim
+# Install Neovim if not present (or too old on Linux).
+# The nvim config uses the vim.lsp.config API introduced in Neovim 0.11, but the
+# Debian apt package is far older, so on Linux we install the official release.
+NVIM_MIN_MINOR=11
+
+nvim_is_recent() {
+    command -v nvim &>/dev/null || return 1
+    local v major minor
+    v="$(nvim --version | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1)"
+    [[ -z "$v" ]] && return 1
+    major="${v%%.*}"
+    minor="${v#*.}"
+    (( major > 0 || minor >= NVIM_MIN_MINOR ))
+}
+
+install_neovim_linux() {
+    ensure_pkg_consent || { echo "  Skipped Neovim"; return 0; }
+    local arch tarch
+    arch="$(uname -m)"
+    case "$arch" in
+        x86_64|amd64)  tarch="x86_64" ;;
+        aarch64|arm64) tarch="arm64" ;;
+        *)
+            echo "  Unsupported arch '$arch'; falling back to apt neovim (may be too old)"
+            sudo apt install -y neovim
+            return 0
+            ;;
+    esac
+    local url="https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${tarch}.tar.gz"
+    local tmp
+    tmp="$(mktemp -d)"
+    echo "  Downloading official Neovim release (${tarch})..."
+    if ! curl -fsSL "$url" -o "$tmp/nvim.tar.gz"; then
+        echo "  Download failed; falling back to apt neovim (may be too old)"
+        sudo apt install -y neovim
+        rm -rf "$tmp"
+        return 0
+    fi
+    sudo rm -rf "/opt/nvim-linux-${tarch}"
+    sudo tar -C /opt -xzf "$tmp/nvim.tar.gz"
+    sudo ln -sf "/opt/nvim-linux-${tarch}/bin/nvim" /usr/local/bin/nvim
+    rm -rf "$tmp"
+    echo "  Neovim installed to /opt/nvim-linux-${tarch} (symlinked at /usr/local/bin/nvim)"
+}
+
+if nvim_is_recent; then
+    echo "Neovim already installed ($(nvim --version | head -1))"
 else
-    echo "Neovim already installed"
+    echo "Installing Neovim..."
+    if [[ "$OS" == "macos" ]]; then
+        pkg_install "Neovim" neovim neovim
+    else
+        install_neovim_linux
+    fi
 fi
 
 # Install gcc (needed for Treesitter parser compilation)
