@@ -7,8 +7,9 @@ export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 
 # agnoster shows dir + git status like the old Starship prompt did, and it
 # prints "user@host" over SSH so you always know whether you're on the Mac or
-# the Linux box. It needs a Nerd/powerline font (the Ghostty config ships one).
-# Prefer something plain? Set ZSH_THEME="robbyrussell" in ~/.zshrc.local.
+# the Linux box. Its powerline glyphs come from Ghostty's bundled Nerd Font —
+# no font install needed. Prefer something plain? Set
+# ZSH_THEME="robbyrussell" in ~/.zshrc.local.
 ZSH_THEME="agnoster"
 
 # Hide "user@host" on the local machine; agnoster still shows it inside SSH.

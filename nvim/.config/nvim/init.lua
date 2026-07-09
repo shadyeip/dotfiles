@@ -62,7 +62,8 @@ require("lazy").setup({
 
       -- Install parsers declaratively here instead of compiling them from a
       -- shell script. They download + build on first launch (needs a C
-      -- compiler, provided by the Brewfile/apt packages).
+      -- compiler — gcc from apt on the Linux dev box, or clang from the Xcode
+      -- CLT on macOS).
       require("nvim-treesitter").install({
         "bash", "c", "css", "dockerfile", "go", "html", "javascript", "json",
         "lua", "markdown", "markdown_inline", "python", "rust", "terraform",

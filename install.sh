@@ -4,12 +4,13 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # dotfiles installer
 #
-# Installs the tooling (via Homebrew on macOS / apt on Debian-Ubuntu), sets up
-# Oh My Zsh + a couple of community plugins, and symlinks the configs into your
-# home directory with GNU Stow. Re-run any time to repair things.
+# Sets up Oh My Zsh + a couple of community plugins and symlinks the configs
+# into your home directory with GNU Stow. On Linux it also installs the dev
+# tooling with apt; on macOS it installs NO packages (no Homebrew needed) —
+# the Mac is just the terminal host. Re-run any time to repair things.
 #
-#   ./install.sh                # full install
-#   ./install.sh --no-packages  # just link configs + Oh My Zsh (no pkg manager)
+#   ./install.sh                # install
+#   ./install.sh --no-packages  # skip the apt step (Linux); macOS skips anyway
 #   ./install.sh --verify       # check the install, change nothing
 #   ./install.sh --yes          # answer "yes" to every prompt (unattended)
 #
@@ -26,8 +27,8 @@ usage() {
 Usage: ./install.sh [options]
 
 Options:
-  --no-packages  Skip installing system packages (just Oh My Zsh + config links).
-                 Useful on a locked-down machine without Homebrew/apt.
+  --no-packages  Skip the apt step on Linux (Oh My Zsh + config links only).
+                 macOS installs no packages regardless.
   --verify       Check symlinks and dependencies, then exit (no changes made).
   -y, --yes      Assume "yes" to all confirmation prompts (non-interactive).
   -h, --help     Show this help and exit.
@@ -145,14 +146,6 @@ install_neovim_linux() {
 
 if [[ "$NO_PACKAGES" == true ]]; then
     echo "Skipping package installation (--no-packages)."
-elif [[ "$OS" == "macos" ]]; then
-    if ! command -v brew &>/dev/null; then
-        echo "Homebrew not found. Install it (https://brew.sh) or re-run with --no-packages." >&2
-        exit 1
-    fi
-    if confirm "Install packages from the Brewfile?"; then
-        brew bundle --file="$DOTFILES/Brewfile"
-    fi
 elif [[ "$OS" == "linux" ]]; then
     if confirm "Install packages with 'sudo apt'?"; then
         sudo apt update
@@ -160,8 +153,16 @@ elif [[ "$OS" == "linux" ]]; then
         sudo apt install -y $(grep -vE '^\s*#' "$DOTFILES/apt-packages.txt")
         nvim_is_recent || install_neovim_linux
     fi
+elif [[ "$OS" == "macos" ]]; then
+    # The Mac is just the terminal host — no package manager required, so this
+    # works fine without Homebrew. zsh ships with macOS, git comes with the
+    # Xcode Command Line Tools, Oh My Zsh is cloned below, and Ghostty supplies
+    # the Nerd Font glyphs. Dev tooling (neovim, LSPs, go, node, ...) lives on
+    # the Linux box. See the README for the short optional list if you want
+    # tmux/fzf/neovim locally.
+    echo "macOS host: nothing to install with a package manager."
 else
-    echo "Unknown OS; skipping package install. Use --no-packages to silence this."
+    echo "Unknown OS; skipping package install."
 fi
 
 # ---------------------------------------------------------------------------
@@ -290,7 +291,9 @@ fi
 # 6. TPM (tmux plugin manager)
 # ---------------------------------------------------------------------------
 TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ -d "$TPM_DIR" ]]; then
+if ! command -v tmux &>/dev/null; then
+    echo "tmux not installed — skipping TPM (install tmux, then re-run)."
+elif [[ -d "$TPM_DIR" ]]; then
     echo "TPM already installed"
 else
     echo "Installing TPM..."
@@ -302,6 +305,9 @@ echo "Done!"
 echo ""
 echo "Next steps:"
 echo "  - Restart your terminal (or: exec zsh)"
-echo "  - In tmux, press prefix + I to install tmux plugins"
-echo "  - Open nvim once; it installs its plugins, LSP servers, and Treesitter"
-echo "    parsers on first launch"
+command -v tmux &>/dev/null && \
+    echo "  - In tmux, press prefix + I to install tmux plugins"
+command -v nvim &>/dev/null && \
+    echo "  - Open nvim once; it installs its plugins, LSP servers, and"
+command -v nvim &>/dev/null && \
+    echo "    Treesitter parsers on first launch"

@@ -7,7 +7,8 @@ place with [GNU Stow](https://www.gnu.org/software/stow/).
 
 Designed around one workflow: a **macOS host** where the terminal runs, and a
 **Linux box reached over SSH** where most dev work happens, tied together with
-**tmux**.
+**tmux**. The Mac side needs **no Homebrew and almost nothing installed** — all
+the heavy tooling lives on the Linux box.
 
 ## What's included
 
@@ -31,12 +32,12 @@ dotfiles/
 ├── tmux/.config/tmux/         # → ~/.config/tmux/
 ├── nvim/.config/nvim/         # → ~/.config/nvim/
 ├── ghostty/.config/ghostty/   # → ~/.config/ghostty/  (macOS only)
-├── Brewfile                   # macOS packages
-├── apt-packages.txt           # Debian/Ubuntu packages
+├── apt-packages.txt           # Debian/Ubuntu packages (Linux dev box)
 └── install.sh                 # one installer for both machines
 ```
 
-Each top-level directory is a stow package linked into `$HOME`.
+Each top-level directory is a stow package linked into `$HOME`. There's no
+Brewfile: the Mac installs no packages (see below).
 
 ## Install
 
@@ -49,14 +50,16 @@ cd ~/dotfiles
 Run it as your normal user (not with `sudo`) on **both** your Mac and the Linux
 box — it detects the OS and does the right thing. The script:
 
-1. Installs packages — `brew bundle` on macOS, `apt` on Debian/Ubuntu (asks
-   first). On Linux it fetches the official Neovim release, since the nvim
-   config needs Neovim ≥ 0.11 and the apt package is too old.
-2. Installs Oh My Zsh and the two external zsh plugins.
-3. Backs up anything conflicting to `~/.dotfiles_backup/`, then stows the configs.
+1. Installs packages — **only on Linux** (`apt`, asks first), where it also
+   fetches the official Neovim release since the config needs Neovim ≥ 0.11 and
+   the apt package is too old. **On macOS it installs nothing** (no package
+   manager, no Homebrew).
+2. Installs Oh My Zsh and the two external zsh plugins (just `git` clones).
+3. Backs up anything conflicting to `~/.dotfiles_backup/`, then stows the configs
+   (falls back to plain symlinks if `stow` isn't installed).
 4. Sets your login shell to zsh (asks first).
 5. Prompts for your git identity if it isn't set.
-6. Installs TPM.
+6. Installs TPM (only if tmux is present).
 
 Neovim installs its own plugins, LSP servers, and Treesitter parsers the first
 time you open it. In tmux, press `prefix + I` once to install the tmux plugins.
@@ -66,27 +69,34 @@ time you open it. In tmux, press `prefix + I` once to install the tmux plugins.
 | Flag | Effect |
 |------|--------|
 | `--yes` / `-y` | Answer "yes" to every prompt (unattended). |
-| `--no-packages` | Skip the package manager entirely — just Oh My Zsh + config links. For a locked-down Mac with no Homebrew; falls back to plain symlinks if `stow` is missing. |
+| `--no-packages` | Skip the `apt` step too (Linux). macOS already installs nothing. |
 | `--verify` | Check symlinks and dependencies, then exit without changing anything. |
 
-### macOS without Homebrew
+### What the Mac actually needs
 
-```sh
-./install.sh --no-packages
-```
+Nothing from a package manager. Everything the shell setup depends on either
+ships with macOS or is fetched by a plain `git` clone:
 
-Links the configs and installs Oh My Zsh (needs `git`, which ships with the
-Xcode Command Line Tools) without touching a package manager. Install the actual
-tools — neovim, tmux, fzf, ripgrep, node, go — however your machine allows, and
-they light up on the next shell.
+| Need | How it's satisfied |
+|------|--------------------|
+| **zsh** | Preinstalled on macOS. |
+| **git** | Comes with the Xcode Command Line Tools (`xcode-select --install`). |
+| **Oh My Zsh** + plugins | Cloned by `install.sh`. |
+| **Nerd Font glyphs** | Bundled in Ghostty — no font install. |
+| **Ghostty** | Download the app from [ghostty.org](https://ghostty.org) (a normal `.app`, no brew). |
+
+That's the whole list. Anything else — `tmux`, `fzf`, `neovim` for *local* use —
+is optional; grab it however your machine allows and it lights up on the next
+shell. The real dev toolchain (neovim, LSP servers, go, node, ripgrep, …) lives
+on the Linux box, installed there by `apt`.
 
 ## The macOS → SSH → Linux workflow
 
 The same repo drives both machines:
 
-- **On the Mac** (where Ghostty runs): stows everything including the Ghostty
-  terminal config and the Nerd Font (needed so the `agnoster` prompt, tmux, and
-  Neovim icons render).
+- **On the Mac** (where Ghostty runs): stows the shell + Ghostty config and
+  installs Oh My Zsh — no packages. Ghostty's bundled Nerd Font makes the
+  `agnoster` prompt, tmux, and Neovim icons render with nothing extra installed.
 - **On the Linux VM** (over SSH): stows the shell/editor configs, skips Ghostty.
   Neovim, its LSP servers, and Treesitter parsers all live on the VM — right
   next to your code, so completion and diagnostics have no round-trip latency.
