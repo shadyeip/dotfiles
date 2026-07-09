@@ -307,37 +307,43 @@ Enter copy mode with `prefix + [`, then:
 
 ### Zsh
 
-Source: `zsh/.config/zsh/04-keybindings.zsh`
+Source: `zsh/.zshrc` (Oh My Zsh)
 
-#### Word & Line Navigation
+The shell is [Oh My Zsh](https://ohmyz.sh) with the `agnoster` theme. Most
+keybindings, aliases, and completions come from its plugins rather than custom
+config.
+
+#### Line Navigation (standard emacs bindings)
 
 | Key | Action |
 |-----|--------|
-| `Option + Right/Left` | Forward / Backward word |
 | `Ctrl-A` | Beginning of line |
 | `Ctrl-E` | End of line |
+| `Alt-B` / `Alt-F` | Backward / Forward word |
 
-#### History
-
-| Key | Action |
-|-----|--------|
-| `Ctrl-R` | Search history backward |
-| `Ctrl-S` | Search history forward |
-| `Ctrl-P` / `Ctrl-N` | Previous / Next history (with search) |
-
-#### FZF — sourced via `zsh/.config/zsh/02-plugins.zsh`
+#### FZF — `fzf` plugin
 
 | Key | Action |
 |-----|--------|
+| `Ctrl-R` | Fuzzy search command history |
 | `Ctrl-T` | Paste selected file path |
-| `Ctrl-R` | Fuzzy search command history (overrides default) |
 | `Alt-C` | cd into selected directory |
 
 #### Aliases
 
-| Alias | Action |
-|-------|--------|
+The `git` plugin provides the usual git shortcuts (`gst`, `gaa`, `gcmsg`, `gp`,
+`gd`, `glo`, …) and the `tmux` plugin adds session helpers (`ta`, `ts`, `tl`).
+Personal additions in `.zshrc`:
+
+| Alias / function | Action |
+|------------------|--------|
 | `work` | Attach or create a tmux session named "work" |
+| `c` | Clear the screen |
+| `gitcp "msg"` | `git add -A` + commit + push in one step |
+| `epoch2date <n>` | Epoch seconds → human date (UTC) |
+
+Machine-specific tweaks (a different theme, extra aliases) go in an untracked
+`~/.zshrc.local`, sourced at the end of `.zshrc`.
 
 ### Cross-Tool Integration
 

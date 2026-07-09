@@ -60,6 +60,15 @@ require("lazy").setup({
     config = function()
       require("nvim-treesitter").setup({})
 
+      -- Install parsers declaratively here instead of compiling them from a
+      -- shell script. They download + build on first launch (needs a C
+      -- compiler, provided by the Brewfile/apt packages).
+      require("nvim-treesitter").install({
+        "bash", "c", "css", "dockerfile", "go", "html", "javascript", "json",
+        "lua", "markdown", "markdown_inline", "python", "rust", "terraform",
+        "toml", "typescript", "yaml",
+      })
+
       -- Incremental selection keymaps
       vim.keymap.set("n", "<C-Space>", function()
         require("nvim-treesitter.incremental_selection").init_selection()

@@ -3,7 +3,7 @@ brew "git"
 brew "zsh"
 brew "tmux"
 brew "neovim"
-brew "starship"
+brew "stow"
 
 # Search & navigation
 brew "fzf"
@@ -34,3 +34,5 @@ brew "curl"
 
 # Terminal
 cask "ghostty"
+# Nerd Font — required for the agnoster prompt, tmux, and Neovim icons to render
+cask "font-jetbrains-mono-nerd-font"
