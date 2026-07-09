@@ -2,13 +2,13 @@
 
 Personal dotfiles built on off-the-shelf tools instead of hand-rolled config:
 [Oh My Zsh](https://ohmyz.sh) for the shell, [lazy.nvim](https://github.com/folke/lazy.nvim)
-for Neovim, [TPM](https://github.com/tmux-plugins/tpm) for tmux, all linked into
-place with [GNU Stow](https://www.gnu.org/software/stow/).
+for Neovim, and [TPM](https://github.com/tmux-plugins/tpm) for tmux, symlinked
+into `$HOME` by a small installer.
 
 Designed around one workflow: a **macOS host** where the terminal runs, and a
 **Linux box reached over SSH** where most dev work happens, tied together with
-**tmux**. The Mac side needs **no Homebrew and almost nothing installed** — all
-the heavy tooling lives on the Linux box.
+**tmux**. Both sides install **as little as possible** — no Homebrew on the Mac,
+no `apt` dependency on Linux; existing `zsh`/`tmux`/`git` are left untouched.
 
 ## What's included
 
@@ -32,12 +32,11 @@ dotfiles/
 ├── tmux/.config/tmux/         # → ~/.config/tmux/
 ├── nvim/.config/nvim/         # → ~/.config/nvim/
 ├── ghostty/.config/ghostty/   # → ~/.config/ghostty/  (macOS only)
-├── apt-packages.txt           # Debian/Ubuntu packages (Linux dev box)
 └── install.sh                 # one installer for both machines
 ```
 
-Each top-level directory is a stow package linked into `$HOME`. There's no
-Brewfile: the Mac installs no packages (see below).
+Each top-level directory is symlinked into `$HOME` file-by-file. No package
+lists, no Brewfile — the installer pulls in as little as possible (see below).
 
 ## Install
 
@@ -48,15 +47,18 @@ cd ~/dotfiles
 ```
 
 Run it as your normal user (not with `sudo`) on **both** your Mac and the Linux
-box — it detects the OS and does the right thing. The script:
+box — it detects the OS and does the right thing. The guiding rule: **don't
+install what's already there.** It assumes `zsh`, `tmux`, and `git` are present
+and never touches them. The script:
 
-1. Installs packages — **only on Linux** (`apt`, asks first), where it also
-   fetches the official Neovim release since the config needs Neovim ≥ 0.11 and
-   the apt package is too old. **On macOS it installs nothing** (no package
-   manager, no Homebrew).
+1. Installs tools — **only on Linux**, and only the few this repo's configs use
+   that usually aren't preinstalled: **Neovim** (needs ≥ 0.11), **ripgrep**, and
+   **fzf**, as prebuilt binaries into `~/.local` (no apt, no root). It *reports*
+   anything else that's missing instead of installing it. **On macOS it installs
+   nothing.**
 2. Installs Oh My Zsh and the two external zsh plugins (just `git` clones).
-3. Backs up anything conflicting to `~/.dotfiles_backup/`, then stows the configs
-   (falls back to plain symlinks if `stow` isn't installed).
+3. Backs up anything conflicting to `~/.dotfiles_backup/`, then symlinks the
+   configs into place.
 4. Sets your login shell to zsh (asks first).
 5. Prompts for your git identity if it isn't set.
 6. Installs TPM (only if tmux is present).
@@ -69,7 +71,7 @@ time you open it. In tmux, press `prefix + I` once to install the tmux plugins.
 | Flag | Effect |
 |------|--------|
 | `--yes` / `-y` | Answer "yes" to every prompt (unattended). |
-| `--no-packages` | Skip the `apt` step too (Linux). macOS already installs nothing. |
+| `--no-packages` | Skip the `~/.local` tool downloads too (config links + Oh My Zsh only). |
 | `--verify` | Check symlinks and dependencies, then exit without changing anything. |
 
 ### What the Mac actually needs
@@ -87,19 +89,37 @@ ships with macOS or is fetched by a plain `git` clone:
 
 That's the whole list. Anything else — `tmux`, `fzf`, `neovim` for *local* use —
 is optional; grab it however your machine allows and it lights up on the next
-shell. The real dev toolchain (neovim, LSP servers, go, node, ripgrep, …) lives
-on the Linux box, installed there by `apt`.
+shell.
+
+### What the Linux box needs
+
+`zsh`, `tmux`, and `git` are assumed already installed (they usually are on a
+dev box) — the installer leaves them alone. It only fetches the tools the
+configs here actually use and that typically aren't preinstalled, as prebuilt
+binaries into `~/.local/bin` — **no apt, no root**:
+
+| Tool | Why | Source |
+|------|-----|--------|
+| **Neovim** | The editor; config needs ≥ 0.11 | Official release tarball → `~/.local/nvim` |
+| **ripgrep** | Powers Telescope live-grep (`Space g`) | GitHub release binary |
+| **fzf** | `Ctrl-R` history / file search | GitHub release binary |
+
+For **full** Neovim features you also want a C compiler (Treesitter), plus
+`node` and `go` (LSP servers via Mason). A dev box normally already has these;
+if not, the installer prints the one-line `apt` command — it won't run it for
+you. `apt` is only ever a suggestion here, never a dependency.
 
 ## The macOS → SSH → Linux workflow
 
 The same repo drives both machines:
 
-- **On the Mac** (where Ghostty runs): stows the shell + Ghostty config and
+- **On the Mac** (where Ghostty runs): links the shell + Ghostty config and
   installs Oh My Zsh — no packages. Ghostty's bundled Nerd Font makes the
   `agnoster` prompt, tmux, and Neovim icons render with nothing extra installed.
-- **On the Linux VM** (over SSH): stows the shell/editor configs, skips Ghostty.
-  Neovim, its LSP servers, and Treesitter parsers all live on the VM — right
-  next to your code, so completion and diagnostics have no round-trip latency.
+- **On the Linux VM** (over SSH): links the shell/editor configs and drops
+  Neovim/ripgrep/fzf into `~/.local`, skips Ghostty. Neovim, its LSP servers,
+  and Treesitter parsers all live on the VM — right next to your code, so
+  completion and diagnostics have no round-trip latency.
 
 Two things make the remote experience match local:
 

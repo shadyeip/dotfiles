@@ -1,5 +1,5 @@
 # ~/.zshrc — Oh My Zsh based configuration.
-# Managed in the dotfiles repo and symlinked here by install.sh (stow).
+# Managed in the dotfiles repo and symlinked here by install.sh.
 # Keep personal, machine-specific tweaks in ~/.zshrc.local (untracked).
 
 # --- Oh My Zsh -------------------------------------------------------------
@@ -36,6 +36,9 @@ plugins=(
 source "$ZSH/oh-my-zsh.sh"
 
 # --- Environment -----------------------------------------------------------
+# install.sh drops neovim/ripgrep/fzf here; make sure they're on PATH.
+[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+
 if command -v nvim >/dev/null 2>&1; then
   export EDITOR="nvim" VISUAL="nvim"
   alias vim="nvim"
@@ -43,11 +46,6 @@ else
   export EDITOR="vim" VISUAL="vim"
 fi
 export PAGER="less"
-
-# On Linux, pick up Homebrew if it's installed (adds brew's bin to PATH).
-if [[ "$OSTYPE" == linux-gnu* && -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
 
 # --- Aliases ---------------------------------------------------------------
 # Oh My Zsh's git/tmux/docker/etc. plugins already provide the common aliases
