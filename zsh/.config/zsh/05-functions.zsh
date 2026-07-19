@@ -54,15 +54,9 @@ dotfiles_update() {
     echo "Updating dotfiles from $dotfiles_dir..."
     git -C "$dotfiles_dir" pull || { echo "Error: git pull failed"; return 1; }
 
-    echo ""
-    if "$dotfiles_dir/install.sh" --verify; then
-        echo ""
-        echo "Dotfiles updated. Reloading..."
-        source ~/.zshrc
-    else
-        echo ""
-        echo "Issues found. Run: $dotfiles_dir/install.sh"
-    fi
+    echo "Reloading..."
+    source ~/.zshrc
+    echo "Done. If a new file/package was added, re-run stow — see README."
 }
 
 alias dotup=dotfiles_update

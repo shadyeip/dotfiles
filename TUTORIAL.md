@@ -207,69 +207,6 @@ Motions used: [Marks, Registers, Macros](#marks-registers-macros), [Window Manag
 
 Custom keybindings from this repo's configuration files. Source file paths are relative to the dotfiles root.
 
-### Neovim
-
-Source: `nvim/init.lua`
-
-Leader key: **Space**
-
-#### Fuzzy Finding — telescope.nvim
-
-| Key | Action |
-|-----|--------|
-| `Space f` | Find files |
-| `Space g` | Live grep |
-| `Space b` | List buffers |
-| `Space h` | Help tags |
-
-#### LSP — nvim-lspconfig
-
-| Key | Action |
-|-----|--------|
-| `gd` | Go to definition |
-| `gr` | Show references |
-| `K` | Hover documentation |
-| `Space r` | Rename symbol |
-| `Space a` | Code action |
-| `Space d` | Open diagnostic float |
-
-#### General
-
-| Key | Action |
-|-----|--------|
-| `Space w` | Save file |
-| `Space q` | Quit |
-| `Space x` | Close buffer |
-| `Escape` | Clear search highlight |
-| `Ctrl-d` | Scroll down + center |
-| `Ctrl-u` | Scroll up + center |
-
-#### Visual Mode
-
-| Key | Action |
-|-----|--------|
-| `J` | Move selection down |
-| `K` | Move selection up |
-| `<` | Indent left (reselects) |
-| `>` | Indent right (reselects) |
-
-#### Treesitter Selection — nvim-treesitter
-
-| Key | Action |
-|-----|--------|
-| `Ctrl-Space` (normal) | Start incremental selection |
-| `Ctrl-Space` (visual) | Expand selection |
-| `Backspace` (visual) | Shrink selection |
-
-#### Completion — nvim-cmp
-
-| Key | Action |
-|-----|--------|
-| `Ctrl-n` / `Ctrl-p` | Next / Previous item |
-| `Ctrl-d` / `Ctrl-u` | Scroll docs down / up |
-| `Enter` | Confirm selection |
-| `Ctrl-Space` | Trigger completion |
-
 ### Tmux
 
 Source: `tmux/tmux.conf`
@@ -341,7 +278,7 @@ Source: `zsh/.config/zsh/04-keybindings.zsh`
 
 ### Cross-Tool Integration
 
-The **vim-tmux-navigator** plugin (configured in both `nvim/init.lua` and `tmux/tmux.conf`) provides seamless pane/split switching:
+The **vim-tmux-navigator** plugin (configured in `tmux/tmux.conf`, see [Prerequisites](README.md#prerequisites)) provides seamless pane/split switching between vim and tmux:
 
 | Key | Action |
 |-----|--------|
@@ -350,10 +287,10 @@ The **vim-tmux-navigator** plugin (configured in both `nvim/init.lua` and `tmux/
 | `Ctrl-k` | Navigate up |
 | `Ctrl-l` | Navigate right |
 
-These keys work identically whether the cursor is in a neovim split or a tmux pane. The plugin must be installed on both sides for this to work.
+These keys work identically whether the cursor is in a vim split or a tmux pane, provided the matching vim-tmux-navigator plugin is also installed in your vim config.
 
 ### Troubleshooting
 
 - **`Ctrl-S` freezes the terminal** — Your terminal has flow control enabled. Add `stty -ixon` to your `.zshrc` (or run it once) to disable it. `Ctrl-Q` unfreezes if you're stuck.
-- **`Ctrl-h/j/k/l` doesn't cross between vim and tmux** — Ensure vim-tmux-navigator is installed in both neovim (plugin) and tmux (TPM plugin or manual snippet in `tmux.conf`).
+- **`Ctrl-h/j/k/l` doesn't cross between vim and tmux** — Ensure vim-tmux-navigator is installed in both your vim config and tmux (via TPM, see [Prerequisites](README.md#prerequisites)).
 - **Option key doesn't work for word navigation in zsh** — In iTerm2/Terminal.app, set the Option key to send `Esc+` (Meta) in the profile's key settings.

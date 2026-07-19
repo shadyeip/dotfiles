@@ -1,7 +1,6 @@
-# File: ~/.config/zsh/03-completions.zsh
-
-# Initialize completion system
-autoload -Uz compinit && compinit -C
+# File: ~/.config/zsh/02-completions.zsh
+# oh-my-zsh runs compinit itself (see ~/.zshrc); these zstyles just configure
+# the completion system it initializes.
 
 # Cache completion to speed things up
 zstyle ':completion::complete:*' use-cache on
@@ -85,7 +84,7 @@ zstyle ':completion:*:(ssh|scp|rsync):*:hosts-host' ignored-patterns '*(.|:)*' l
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-domain' ignored-patterns '<->.<->.<->.<->' '^[-[:alnum:]]##(.[-[:alnum:]]##)##' '*@*'
 zstyle ':completion:*:(ssh|scp|rsync):*:hosts-ipaddr' ignored-patterns '^(<->.<->.<->.<->|(|::)([[:xdigit:].]##:(#c,2))##(|%*))' '127.0.0.<->' '255.255.255.255' '::1' 'fe80::*'
 
-# File: ~/.config/zsh/03-completions.zsh (continued)
+# File: ~/.config/zsh/02-completions.zsh (continued)
 
 # Go (Golang) Completions
 if (( $+commands[go] )); then

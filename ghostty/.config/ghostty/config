@@ -3,10 +3,11 @@ theme = Catppuccin Mocha
 
 # Font
 font-size = 14
-# A Nerd Font is required for the icons in Neovim, Starship and tmux to render
-# (they show as boxes otherwise). This font must be installed on THIS machine —
-# the one Ghostty runs on — even when you SSH elsewhere, because the local
-# terminal draws the glyphs. Install with: brew install --cask font-jetbrains-mono-nerd-font
+# A Nerd Font is required for the icons in tmux (and any other glyph-using
+# tool) to render (they show as boxes otherwise). This font must be installed
+# on THIS machine — the one Ghostty runs on — even when you SSH elsewhere,
+# because the local terminal draws the glyphs. Install with:
+# brew install --cask font-jetbrains-mono-nerd-font
 font-family = JetBrainsMono Nerd Font
 
 # Window

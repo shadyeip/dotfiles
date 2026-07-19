@@ -1,4 +1,4 @@
-# File: ~/.config/zsh/04-keybindings.zsh
+# File: ~/.config/zsh/03-keybindings.zsh
 
 # Word navigation for macOS
 # bindkey "^[[1;3C" forward-word   # Option + Right Arrow
@@ -12,7 +12,7 @@ bindkey "[D" backward-word     # Option + Left Arrow
 bindkey "^A" beginning-of-line
 bindkey "^E" end-of-line
 
-# History search (Ctrl-R is handled by fzf in 02-plugins.zsh)
+# History search (Ctrl-R is handled by the oh-my-zsh fzf plugin)
 
 # Up/down line or search
 bindkey "^P" up-line-or-search
