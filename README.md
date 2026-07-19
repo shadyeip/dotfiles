@@ -87,10 +87,10 @@ automatically — copy the command you need.
   no-op if it isn't.
   - macOS: `brew install fzf`
   - Debian/Ubuntu: `sudo apt install fzf`
-- **A terminal-side vim/Neovim plugin manager + vim-tmux-navigator** — for
-  seamless `Ctrl-h/j/k/l` pane navigation between vim splits and tmux panes
-  (see [TUTORIAL.md](TUTORIAL.md#cross-tool-integration)). Neither vim nor
-  Neovim configuration is managed by this repo.
+- **A vim plugin manager + vim-tmux-navigator** — for seamless
+  `Ctrl-h/j/k/l` pane navigation between vim splits and tmux panes (see
+  [TUTORIAL.md](TUTORIAL.md#cross-tool-integration)). vim configuration
+  itself is not managed by this repo.
 - **Ghostty** + a Nerd Font (macOS only) — the `ghostty` package assumes the
   [Ghostty](https://ghostty.org) terminal app is installed, and its config
   sets a Nerd Font for glyph rendering (icons in tmux, etc.):
@@ -194,7 +194,7 @@ sourcing `oh-my-zsh.sh` itself:
 ### vim-tmux-navigator
 
 - `Ctrl-h/j/k/l` — seamless navigation between vim splits and tmux panes
-  (requires the matching plugin in your vim/Neovim config — see
+  (requires the matching plugin in your vim config — see
   [Prerequisites](#prerequisites))
 
 ### tmux-yank

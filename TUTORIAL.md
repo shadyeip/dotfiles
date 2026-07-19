@@ -287,10 +287,10 @@ The **vim-tmux-navigator** plugin (configured in `tmux/tmux.conf`, see [Prerequi
 | `Ctrl-k` | Navigate up |
 | `Ctrl-l` | Navigate right |
 
-These keys work identically whether the cursor is in a vim split or a tmux pane, provided the matching vim-tmux-navigator plugin is also installed in your vim/Neovim config.
+These keys work identically whether the cursor is in a vim split or a tmux pane, provided the matching vim-tmux-navigator plugin is also installed in your vim config.
 
 ### Troubleshooting
 
 - **`Ctrl-S` freezes the terminal** — Your terminal has flow control enabled. Add `stty -ixon` to your `.zshrc` (or run it once) to disable it. `Ctrl-Q` unfreezes if you're stuck.
-- **`Ctrl-h/j/k/l` doesn't cross between vim and tmux** — Ensure vim-tmux-navigator is installed in both your vim/Neovim config and tmux (via TPM, see [Prerequisites](README.md#prerequisites)).
+- **`Ctrl-h/j/k/l` doesn't cross between vim and tmux** — Ensure vim-tmux-navigator is installed in both your vim config and tmux (via TPM, see [Prerequisites](README.md#prerequisites)).
 - **Option key doesn't work for word navigation in zsh** — In iTerm2/Terminal.app, set the Option key to send `Esc+` (Meta) in the profile's key settings.

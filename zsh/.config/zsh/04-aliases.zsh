@@ -102,9 +102,4 @@ alias base64-decode='python3 -c "import sys, base64; print(base64.b64decode(sys.
 # python
 alias pdb="python3 -m pdb"
 
-# neovim
-if command -v nvim &>/dev/null; then
-    alias vim=nvim
-fi
-
 alias ls-downloads='ls -ltr ~/Downloads'

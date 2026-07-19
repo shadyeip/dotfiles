@@ -15,13 +15,8 @@ setopt HIST_REDUCE_BLANKS
 setopt HIST_VERIFY
 
 # Environment variables
-if command -v nvim &>/dev/null; then
-    export EDITOR='nvim'
-    export VISUAL='nvim'
-else
-    export EDITOR='vim'
-    export VISUAL='vim'
-fi
+export EDITOR='vim'
+export VISUAL='vim'
 export PAGER='less'
 export LANG='en_US.UTF-8'
 export LC_ALL='en_US.UTF-8'
