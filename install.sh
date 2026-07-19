@@ -6,18 +6,22 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 ASSUME_YES=false
 VERIFY=false
+CONFIGS_ONLY=false
 
 usage() {
     cat <<'EOF'
 Usage: ./install.sh [options]
 
 Options:
-  --verify    Check symlinks and dependencies, then exit (no changes made)
-  -y, --yes   Assume "yes" to all confirmation prompts (non-interactive)
-  -h, --help  Show this help and exit
+  --verify         Check symlinks and dependencies, then exit (no changes made)
+  --configs-only   Only link the dotfiles into ~/.config; install nothing and
+                   make no system changes. Works without stow or a package
+                   manager (e.g. a corporate Mac with no Homebrew).
+  -y, --yes        Assume "yes" to all confirmation prompts (non-interactive)
+  -h, --help       Show this help and exit
 
-This script installs developer tooling (zsh, stow, starship, neovim, fzf,
-ripgrep, gcc, Node.js/npm, Go) and stows the dotfiles into ~/.config.
+By default this script installs developer tooling (zsh, stow, starship, neovim,
+fzf, ripgrep, gcc, Node.js/npm, Go) and links the dotfiles into ~/.config.
 It does NOT install any AI assistant tooling.
 
 Privileged or system-wide actions (package installs, editing /etc/shells,
@@ -29,6 +33,7 @@ EOF
 for arg in "$@"; do
     case "$arg" in
         --verify) VERIFY=true ;;
+        --configs-only|--stow-only) CONFIGS_ONLY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $arg" >&2; usage >&2; exit 1 ;;
@@ -85,6 +90,10 @@ fi
 STOW_PACKAGES=(git tmux nvim starship zsh)
 if [[ "$OS" == "macos" ]]; then
     STOW_PACKAGES+=(ghostty)
+fi
+
+if [[ "$CONFIGS_ONLY" == true ]]; then
+    echo "Configs-only mode: linking dotfiles; installing nothing and making no system changes."
 fi
 
 # --verify mode: check symlinks and dependencies, then exit
@@ -217,6 +226,12 @@ pkg_install() {
         sudo apt install -y "$@"
     fi
 }
+
+# ===========================================================================
+# Package installation and login-shell change — skipped entirely in
+# --configs-only mode (no installs, no sudo, no system changes).
+# ===========================================================================
+if [[ "$CONFIGS_ONLY" == false ]]; then
 
 # Install Node.js if not present (needed for npm + Mason LSP servers like pyright)
 if ! command -v node &>/dev/null; then
@@ -409,6 +424,8 @@ else
     echo "Skipped changing default shell. To do it later: chsh -s \"$ZSH_PATH\""
 fi
 
+fi   # end: package installation / login-shell change (skipped in --configs-only)
+
 # ---------------------------------------------------------------------------
 # Backup helpers — nothing with real content is ever removed without first
 # being copied into $BACKUP_DIR, and every removed symlink is logged there.
@@ -424,6 +441,42 @@ backup_path() {
     mkdir -p "$BACKUP_DIR"
     echo "  Backing up: $target -> $BACKUP_DIR/"
     mv "$target" "$BACKUP_DIR/"
+}
+
+# Stow-free fallback: mirror each package's file tree into $REAL_HOME with
+# symlinks, exactly as `stow` would. Used when stow isn't installed (e.g. a
+# corporate Mac without Homebrew).
+link_packages_manual() {
+    echo "stow not found — linking configs manually (no stow required)."
+    local pkg base file rel dst
+    for pkg in "${STOW_PACKAGES[@]}"; do
+        base="$DOTFILES/$pkg"
+        [[ -d "$base" ]] || continue
+        while IFS= read -r -d '' file; do
+            rel="${file#"$base"/}"
+            dst="$REAL_HOME/$rel"
+            if [[ -e "$dst" && ! -L "$dst" ]]; then
+                backup_path "$dst"
+            fi
+            run_as_user mkdir -p "$(dirname "$dst")"
+            run_as_user ln -sfn "$file" "$dst"
+            echo "  linked $dst"
+        done < <(find "$base" -type f -print0)
+    done
+}
+
+# Link packages using GNU Stow when available, otherwise the manual fallback.
+link_packages() {
+    if command -v stow &>/dev/null; then
+        echo "Stowing dotfiles..."
+        if ! run_as_user stow -v -t "$REAL_HOME" -d "$DOTFILES" "${STOW_PACKAGES[@]}"; then
+            echo "Error: stow failed. Existing files may be in the way; check the output above." >&2
+            [[ -d "$BACKUP_DIR" ]] && echo "Anything already backed up is in $BACKUP_DIR" >&2
+            exit 1
+        fi
+    else
+        link_packages_manual
+    fi
 }
 
 # Migration: remove old symlinks from previous dotfiles layout
@@ -489,16 +542,10 @@ if [[ -d "$BACKUP_DIR" ]]; then
     echo "  Backups saved to: $BACKUP_DIR"
 fi
 
-# Stow all packages
+# Link packages into ~ (uses GNU Stow if available, else a stow-free fallback
+# so this works on machines without stow — e.g. a corporate Mac without brew).
 echo ""
-echo "Stowing dotfiles..."
-if ! run_as_user stow -v -t "$REAL_HOME" -d "$DOTFILES" "${STOW_PACKAGES[@]}"; then
-    echo "Error: stow failed. Existing files may be in the way; check the output above." >&2
-    if [[ -d "$BACKUP_DIR" ]]; then
-        echo "Anything already backed up is in $BACKUP_DIR" >&2
-    fi
-    exit 1
-fi
+link_packages
 
 # Generate a machine-specific tmux local.conf placeholder (sourced by tmux.conf).
 # No AI assistant keybindings are configured.
@@ -518,14 +565,20 @@ GIT_LOCAL="$REAL_HOME/.config/git/config.local"
 if [[ ! -f "$GIT_LOCAL" ]]; then
     echo ""
     echo "Setting up git identity..."
-    read -r -p "Your full name (for git commits): " git_name
-    read -r -p "Your email (matching your GitHub account): " git_email
-    cat > "$GIT_LOCAL" <<EOF
+    git_name=""
+    git_email=""
+    read -r -p "Your full name (for git commits): " git_name || true
+    read -r -p "Your email (matching your GitHub account): " git_email || true
+    if [[ -n "$git_name" && -n "$git_email" ]]; then
+        cat > "$GIT_LOCAL" <<EOF
 [user]
     name = $git_name
     email = $git_email
 EOF
-    echo "Created $GIT_LOCAL"
+        echo "Created $GIT_LOCAL"
+    else
+        echo "Skipped git identity (no input given). Create it later at $GIT_LOCAL"
+    fi
 else
     echo "Git identity already configured ($GIT_LOCAL)"
 fi
@@ -549,11 +602,17 @@ else
 # >>> dotfiles >>>
 export DOTFILES_DIR="$DOTFILES"
 for f in ~/.config/zsh/*.zsh; do source "\$f"; done
-eval "\$(starship init zsh)"
+command -v starship &>/dev/null && eval "\$(starship init zsh)"
 # <<< dotfiles <<<
 EOF
     echo "Added loader block to ~/.zshrc"
 fi
+
+# ===========================================================================
+# TPM + Treesitter parsers — these fetch/compile things, so they're skipped in
+# --configs-only mode. Run a full ./install.sh once the tools are available.
+# ===========================================================================
+if [[ "$CONFIGS_ONLY" == false ]]; then
 
 # TPM
 TPM_DIR="$REAL_HOME/.tmux/plugins/tpm"
@@ -622,10 +681,16 @@ compile_parser "markdown_inline" "$TS_CACHE/tree-sitter-markdown/tree-sitter-mar
 
 echo "Treesitter parsers installed"
 
+fi   # end: TPM + Treesitter (skipped in --configs-only)
+
 echo ""
 echo "Done!"
 
 NOTES=()
+if [[ "$CONFIGS_ONLY" == true ]]; then
+    NOTES+=("  - Configs are linked. Install the tools yourself when you can (no Homebrew needed for the configs themselves).")
+    NOTES+=("  - Re-run './install.sh' (without --configs-only) on a machine where you can install tooling to set up TPM/Treesitter.")
+fi
 if [[ ! -d "$REAL_HOME/.tmux/plugins/catppuccin" ]]; then
     NOTES+=("  - In tmux, press prefix + I to install plugins")
 fi

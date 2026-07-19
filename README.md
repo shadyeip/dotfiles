@@ -129,6 +129,27 @@ The same script works on both your Mac and a Linux box you SSH into:
 
 Run `./install.sh` on each machine — it detects the OS and does the right thing.
 
+### Configs only (no Homebrew / no package manager)
+
+On a machine where you can't install software — e.g. a locked-down corporate
+Mac with no Homebrew — you can link just the config files and install nothing:
+
+```sh
+./install.sh --configs-only
+```
+
+This mode:
+- links the dotfiles into `~/.config/` (using stow if present, otherwise a
+  built-in stow-free symlinker — so it works with no package manager at all),
+- adds the `~/.zshrc` loader block, generates the tmux `local.conf`, and
+  prompts for your git identity,
+- installs **nothing**, changes **no** system settings, and never uses `sudo`.
+
+The configs reference tools (zsh, nvim, starship, tmux…) — install those
+yourself through whatever channel your machine allows. The loader block is
+guarded, so a missing Starship won't error your shell. Add `--yes` to skip the
+prompts entirely.
+
 After install, open tmux and press `prefix + I` to install tmux plugins.
 
 For a detailed walkthrough of keybindings and vim motions, see [TUTORIAL.md](TUTORIAL.md).
