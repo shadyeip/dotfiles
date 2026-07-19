@@ -1,190 +1,184 @@
 # dotfiles
 
-Personal dotfiles with Catppuccin Mocha theme, Starship prompt, and tmux. Managed with [GNU Stow](https://www.gnu.org/software/stow/) — all configs live under `~/.config/`.
+Personal dotfiles for a consistent shell/terminal environment across a macOS
+host and several Linux servers reached over SSH. Managed with
+[GNU Stow](https://www.gnu.org/software/stow/) — all configs live under
+`~/.config/` (plus `~/.zshrc`) as plain symlinks into this repo.
+
+**This repo installs nothing.** There is no install script and no automated
+package management. It only contains config files and a Stow layout. Every
+tool it assumes (zsh, tmux, oh-my-zsh, Stow itself, ...) is something you
+install yourself, once, by hand — see [Prerequisites](#prerequisites) below.
 
 ## What's Included
 
-- **zsh** - Aliases, exports, PATH setup, plugins (autosuggestions, syntax highlighting, fzf)
-- **tmux** - Catppuccin Mocha theme, tmux-yank, extrakto via TPM
-- **starship** - Matching Catppuccin Mocha prompt
-- **git** - Global config with common aliases
-- **nvim** - Neovim with lazy.nvim, Catppuccin, and Treesitter
-- **ghostty** - Terminal emulator config (macOS only — stowed on macOS hosts, skipped on Linux)
-
-Ghostty is a GUI terminal emulator, so its config is only relevant on the
-machine your terminal actually runs on. When you run `install.sh` on a Linux
-box (e.g. a remote/SSH VM), the `ghostty` package is skipped automatically and
-only the shell/editor configs are stowed.
+- **zsh** - oh-my-zsh based shell config: exports, completions, keybindings,
+  aliases, functions
+- **tmux** - Catppuccin Mocha theme, vi-style copy mode, OSC 52 clipboard
+  passthrough for SSH sessions
+- **git** - global config with common aliases
+- **ghostty** - terminal emulator config (macOS only — the GUI terminal runs
+  on your Mac, not on a remote box, so this package is only meaningful there)
 
 ## Structure
 
 ```
 dotfiles/
-├── git/.config/git/          # → ~/.config/git/
-├── tmux/.config/tmux/        # → ~/.config/tmux/
-├── nvim/.config/nvim/        # → ~/.config/nvim/
-├── starship/.config/         # → ~/.config/starship.toml
-├── ghostty/.config/ghostty/  # → ~/.config/ghostty/
-├── zsh/.config/zsh/          # → ~/.config/zsh/
-├── Brewfile                  # macOS packages
-├── apt-packages.txt          # Linux packages
-├── install.sh                # setup script (installs packages + links configs)
-└── install-macos-configs.sh  # macOS, configs only — no packages, no Homebrew
+├── zsh/.zshrc                 # → ~/.zshrc
+├── zsh/.config/zsh/           # → ~/.config/zsh/  (loaded by .zshrc)
+├── tmux/.config/tmux/         # → ~/.config/tmux/
+├── git/.config/git/           # → ~/.config/git/
+├── ghostty/.config/ghostty/   # → ~/.config/ghostty/
+├── README.md
+└── TUTORIAL.md
 ```
 
-Each top-level directory is a stow package. On macOS, `install.sh` stows `git tmux nvim starship ghostty zsh`; on Linux it stows the same set minus `ghostty`. All create symlinks from `~/.config/` into the repo.
+Each top-level directory is a Stow package. Stowing mirrors the package's
+internal path structure onto `$HOME`, so `zsh/.zshrc` becomes `~/.zshrc` and
+`zsh/.config/zsh/01-exports.zsh` becomes `~/.config/zsh/01-exports.zsh`.
 
 ## Prerequisites
 
-You need `git` and `curl` already installed to clone the repo and bootstrap.
-`install.sh` installs everything else automatically on macOS and Debian/Ubuntu:
+Install these yourself, on whichever machine needs them. Nothing here is run
+automatically — copy the command you need.
 
-- zsh
-- [GNU Stow](https://www.gnu.org/software/stow/)
-- [Starship](https://starship.rs)
-- Neovim
-- fzf
-- ripgrep
-- gcc (Debian: `build-essential`) — for compiling Treesitter parsers
-- Node.js + npm — for Neovim Mason LSP servers (pyright, ts_ls)
-- Go — for Neovim Mason LSP servers (gopls)
+### Required everywhere
 
-The script does **not** install any AI assistant tooling, and it does **not**
-install `git` (you already have it — you used it to clone this repo).
+- **git** and **zsh**
+  - macOS: `brew install git zsh`
+  - Debian/Ubuntu: `sudo apt install git zsh`
+- **GNU Stow** (used to symlink this repo into `$HOME`)
+  - macOS: `brew install stow`
+  - Debian/Ubuntu: `sudo apt install stow`
+- **[oh-my-zsh](https://ohmyz.sh/)** — the zsh config assumes it's installed
+  at `~/.oh-my-zsh`:
+  ```sh
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
+  ```
+  `--keep-zshrc` stops the installer from overwriting the `~/.zshrc` this
+  repo provides; stow it after installing oh-my-zsh (or re-stow with `-R` if
+  you stowed first).
+- **zsh-autosuggestions** and **zsh-syntax-highlighting** (referenced by
+  `plugins=(...)` in `zsh/.zshrc`; oh-my-zsh looks for them under its custom
+  plugins directory):
+  ```sh
+  git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+  ```
+- **tmux**
+  - macOS: `brew install tmux`
+  - Debian/Ubuntu: `sudo apt install tmux`
+- **[TPM](https://github.com/tmux-plugins/tpm)** (tmux plugin manager):
+  ```sh
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  ```
+  After stowing the `tmux` package and starting tmux, press `prefix + I` to
+  install the plugins listed in `tmux.conf`.
+- **[Catppuccin for tmux](https://github.com/catppuccin/tmux)** — loaded
+  directly (not via TPM) because of a name conflict with TPM's own naming:
+  ```sh
+  git clone https://github.com/catppuccin/tmux.git ~/.tmux/plugins/tmux
+  ```
 
-Privileged or system-wide steps (package installs, editing `/etc/shells`,
-changing your login shell, running the downloaded Starship installer) prompt
-for confirmation before running. Pass `--yes`/`-y` to accept all prompts for an
-unattended install. Answering "no" to any prompt skips just that step.
+### Optional
 
-If you prefer to install the dependencies manually first:
-
-### macOS
-
-Install Homebrew (if needed):
-
-```sh
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Install prerequisites:
-
-```sh
-brew install zsh stow starship tmux neovim fzf ripgrep gcc node go
-chsh -s "$(command -v zsh)"
-```
-
-Then log out and back in (or restart your terminal).
-
-### Debian/Ubuntu
-
-```sh
-sudo apt update
-sudo apt install -y zsh stow tmux neovim fzf ripgrep build-essential nodejs npm golang git curl
-command -v zsh | sudo tee -a /etc/shells
-chsh -s "$(command -v zsh)"
-curl -sS https://starship.rs/install.sh | sh -s -- --yes
-```
-
-Then log out and back in (or restart your terminal).
+- **fzf** — oh-my-zsh's `fzf` plugin (already in `plugins=(...)`) wires up
+  `Ctrl-R`/`Ctrl-T`/`Alt-C` automatically if fzf is on your `PATH`, and is a
+  no-op if it isn't.
+  - macOS: `brew install fzf`
+  - Debian/Ubuntu: `sudo apt install fzf`
+- **A terminal-side vim/Neovim plugin manager + vim-tmux-navigator** — for
+  seamless `Ctrl-h/j/k/l` pane navigation between vim splits and tmux panes
+  (see [TUTORIAL.md](TUTORIAL.md#cross-tool-integration)). Neither vim nor
+  Neovim configuration is managed by this repo.
+- **Ghostty** + a Nerd Font (macOS only) — the `ghostty` package assumes the
+  [Ghostty](https://ghostty.org) terminal app is installed, and its config
+  sets a Nerd Font for glyph rendering (icons in tmux, etc.):
+  ```sh
+  brew install --cask ghostty font-jetbrains-mono-nerd-font
+  ```
 
 ## Install
 
 ```sh
 git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./install.sh
+stow -t ~ zsh tmux git
 ```
 
-On Linux with sudo:
+On macOS, also stow the terminal config:
 
 ```sh
-sudo ./install.sh
+stow -t ~ ghostty
 ```
 
-For an unattended run that accepts all confirmation prompts:
+Stow will refuse to overwrite a file that already exists and isn't a symlink
+into this repo (e.g. a pre-existing `~/.zshrc`). Back up or remove any
+conflicting file yourself before stowing — nothing does that for you
+automatically. To re-stow after a conflict is resolved, or after pulling new
+files, use `stow -R -t ~ <package>`.
+
+### Git identity
+
+`git/.config/git/config` includes `~/.config/git/config.local`, which isn't
+part of this repo (it's per-machine and untracked). Create it yourself:
 
 ```sh
-./install.sh --yes
+mkdir -p ~/.config/git
+cat > ~/.config/git/config.local <<'EOF'
+[user]
+    name = Your Name
+    email = you@example.com
+EOF
 ```
-
-The install script will:
-1. Install dependencies (stow, starship, neovim, fzf, ripgrep, Node.js/npm, Go, etc.) — asking before it installs anything system-wide
-2. Remove any old-style symlinks from a previous layout (backing up anything with real content to `~/.dotfiles_backup/`)
-3. Stow the packages to `~/.config/` (Ghostty only on macOS)
-4. Set your default login shell to zsh (with confirmation)
-5. Prompt for your git identity (name/email) if not configured
-6. Install TPM and Treesitter parsers
-
-No AI assistant tooling is installed.
-
-### Host (macOS) vs. remote (Linux) machines
-
-The same script works on both your Mac and a Linux box you SSH into:
-
-- **On your Mac** (where the terminal runs): stows everything, including the
-  Ghostty terminal config.
-- **On a Linux VM** (remote/SSH target): stows the shell + editor configs
-  (zsh, tmux, nvim, starship, git) and skips Ghostty, since there's no GUI
-  terminal there.
-
-Run `./install.sh` on each machine — it detects the OS and does the right thing.
-
-After install, open tmux and press `prefix + I` to install tmux plugins.
-
-### macOS without Homebrew (configs only)
-
-On a locked-down Mac where you can't install Homebrew (e.g. a corporate
-machine), use the config-only installer instead:
-
-```sh
-git clone https://github.com/shadyeip/dotfiles.git ~/dotfiles
-cd ~/dotfiles
-./install-macos-configs.sh
-```
-
-This links the same configs into `~/.config` and wires up `~/.zshrc`, but:
-
-- Installs **no packages** and needs **no Homebrew** — it doesn't even require
-  `stow` (it symlinks the configs directly).
-- Doesn't change your login shell (macOS already defaults to zsh).
-- Doesn't compile Neovim Treesitter parsers (that needs Neovim + a compiler).
-
-The shell config degrades gracefully when a tool is missing, so you get a
-working shell immediately. Install the individual tools (starship, tmux,
-neovim, fzf, ripgrep, node, go) by whatever means your machine allows — a
-self-service portal, or prebuilt binaries dropped into `~/.local/bin` — and
-they light up on the next shell. zsh plugins auto-install on first shell load
-(needs `git`, which ships with the Xcode Command Line Tools).
-
-Re-run any time to repair links, and check them with:
-
-```sh
-./install-macos-configs.sh --verify
-```
-
-For a detailed walkthrough of keybindings and vim motions, see [TUTORIAL.md](TUTORIAL.md).
 
 ## Update
 
-Pull latest changes and verify installation:
+Pull the latest changes and reload your shell:
 
 ```sh
 dotup
 ```
 
-This runs `git pull`, verifies symlinks and dependencies with `install.sh --verify`, and reloads your shell. Alias: `update_dotfiles`.
+This is a zsh function (`~/.config/zsh/05-functions.zsh`, aliased to
+`dotup`/`update_dotfiles`) that runs `git pull` in this repo and re-sources
+`~/.zshrc`. If a new file or package was added, re-run `stow -R -t ~
+<package>` yourself afterward.
+
+## Uninstall
+
+```sh
+cd ~/dotfiles
+stow -D -t ~ zsh tmux git ghostty
+```
+
+## Remote copy/paste over SSH
+
+Yanking in tmux copy mode (`prefix + [`, select with vi keys, `y`) sends the
+selection to the terminal via an **OSC 52** escape sequence — tmux itself
+emits this (`set-clipboard on` in `tmux.conf`), so it works regardless of
+what editor or program is running in the pane. `allow-passthrough on` lets
+the escape sequence travel through tmux even when tmux itself is the thing
+running inside an SSH session, so:
+
+- SSH from your Mac into a Linux box, start/attach tmux there, yank text —
+  it lands in your Mac's clipboard.
+- This requires the **local** terminal (the one actually drawing pixels on
+  your Mac — Ghostty, in this repo's config) to support OSC 52. It does not
+  depend on any tool running on the remote box beyond tmux.
 
 ## Zsh Load Order
 
-Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixes:
+`~/.zshrc` sets up oh-my-zsh, then sources everything in
+`zsh/.config/zsh/` in alphabetical order via number prefixes, before finally
+sourcing `oh-my-zsh.sh` itself:
 
 1. `01-exports.zsh` — env vars, PATH
-2. `02-plugins.zsh` — plugin auto-install + sourcing
-3. `03-completions.zsh` — completion setup
-4. `04-keybindings.zsh` — key bindings
-5. `05-aliases.zsh` — aliases
-6. `06-functions.zsh` — functions
+2. `02-completions.zsh` — completion styling (compinit itself runs inside
+   `oh-my-zsh.sh`, sourced last)
+3. `03-keybindings.zsh` — key bindings
+4. `04-aliases.zsh` — aliases
+5. `05-functions.zsh` — functions
 
 ## Tmux Keybindings
 
@@ -200,6 +194,8 @@ Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixe
 ### vim-tmux-navigator
 
 - `Ctrl-h/j/k/l` — seamless navigation between vim splits and tmux panes
+  (requires the matching plugin in your vim/Neovim config — see
+  [Prerequisites](#prerequisites))
 
 ### tmux-yank
 
@@ -217,60 +213,16 @@ Files in `zsh/.config/zsh/` are sourced in alphabetical order via number prefixe
 
 ## Zsh Plugins
 
-Plugins are auto-installed on first shell load (cloned to `~/.config/zsh/plugins/`).
+Configured via `plugins=(...)` in `zsh/.zshrc`, loaded by oh-my-zsh. See
+[Prerequisites](#prerequisites) for how to install the ones oh-my-zsh
+doesn't bundle.
 
-- **zsh-autosuggestions** — fish-like inline suggestions (right arrow to accept)
+- **git** — oh-my-zsh's bundled git aliases/helpers
+- **fzf** — `Ctrl-R` history, `Ctrl-T` file path, `Alt-C` cd (no-op if fzf
+  isn't installed)
+- **zsh-autosuggestions** — fish-like inline suggestions (right arrow to
+  accept)
 - **zsh-syntax-highlighting** — colorizes commands as you type
-- **fzf integration** — `Ctrl-R` history, `Ctrl-T` file path, `Alt-C` cd
 
-## Neovim
-
-Leader key: `Space`
-
-- `Space f` — find files
-- `Space g` — live grep
-- `Space b` — buffers
-- `gd` — go to definition
-- `gr` — references
-- `K` — hover docs
-- `Space r` — rename
-- `Space F` — format buffer
-
-Formatters: black, prettier, stylua, gofmt, terraform_fmt (auto-format on save).
-
-LSP servers: pyright, gopls, lua_ls, ts_ls, terraformls (auto-installed via Mason).
-
-The config uses the `vim.lsp.config` API, which requires **Neovim ≥ 0.11**. On
-Linux, `install.sh` installs the official Neovim release rather than the (older)
-apt package for this reason; on macOS Homebrew's Neovim is current.
-
-## Remote coding over SSH
-
-Neovim runs on the machine where you edit — so if you SSH from your Mac into a
-Linux VM and run `nvim` there, the editor, its plugins, LSP servers and
-Treesitter parsers all live on the VM. Run `install.sh` on the VM to set them
-up (that's why it installs Node.js/Go/gcc there — Mason and the parsers need
-them). LSP running next to your code means no round-trip latency on completion
-and diagnostics.
-
-Two things are handled so the remote experience matches local:
-
-- **Clipboard** — the remote box has no `pbcopy`/`wl-copy`, so inside an SSH
-  session Neovim routes the system registers through **OSC 52** escape
-  sequences, which your local terminal turns into real clipboard operations.
-  tmux is configured with `set-clipboard on` + `allow-passthrough on` so the
-  escapes pass through, and Ghostty allows clipboard read/write. Yanks on the
-  VM land in your Mac's clipboard.
-- **Icons/fonts** — glyphs are drawn by the terminal on your *local* machine, so
-  the Nerd Font only needs to be installed there (configured in the Mac-side
-  `ghostty/config`), not on the VM.
-
-## Git Config
-
-Git identity is stored in `~/.config/git/config.local` (created by `install.sh`):
-
-```gitconfig
-[user]
-    name = Your Name
-    email = you@example.com
-```
+For a detailed walkthrough of keybindings and vim motions, see
+[TUTORIAL.md](TUTORIAL.md).
